@@ -91,6 +91,9 @@ class BraveBrowserProcessImpl : public BrowserProcessImpl {
 #if BUILDFLAG(ENABLE_TOR)
   extensions::BraveTorClientUpdater* tor_client_updater();
 #endif
+#if BUILDFLAG(ENABLE_IPFS)
+  std::unique_ptr<extensions::BraveIpfsClientUpdater> ipfs_client_updater_;
+#endif
   brave::BraveP3AService* brave_p3a_service();
 #if BUILDFLAG(BUNDLE_WIDEVINE_CDM)
   BraveWidevineBundleManager* brave_widevine_bundle_manager();
@@ -101,6 +104,7 @@ class BraveBrowserProcessImpl : public BrowserProcessImpl {
 #if BUILDFLAG(ENABLE_SPEEDREADER)
   speedreader::SpeedreaderWhitelist* speedreader_whitelist();
 #endif
+  extensions::BraveTorClientUpdater* ipfs_client_updater();
 
  private:
   // BrowserProcessImpl overrides:

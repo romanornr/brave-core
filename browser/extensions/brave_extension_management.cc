@@ -8,6 +8,7 @@
 #include <memory>
 
 #include "brave/browser/brave_browser_process_impl.h"
+#include "brave/browser/ipfs/buildflags.h"
 #include "brave/browser/tor/buildflags.h"
 #include "brave/common/extensions/extension_constants.h"
 #include "brave/common/pref_names.h"
@@ -21,6 +22,10 @@
 
 #if BUILDFLAG(ENABLE_TOR)
 #include "brave/browser/extensions/brave_tor_client_updater.h"
+#endif
+
+#if BUILDFLAG(ENABLE_IPFS)
+#include "brave/browser/extensions/brave_ipfs_client_updater.h"
 #endif
 
 namespace extensions {
@@ -44,6 +49,12 @@ void BraveExtensionManagement::RegisterBraveExtensions() {
 #if BUILDFLAG(ENABLE_TOR)
   if (!profile_->AsTestingProfile())
     g_brave_browser_process->tor_client_updater()->Register();
+#endif
+
+#if BUILDFLAG(ENABLE_IPFS)
+  if (!command_line.HasSwitch(
+        switches::kDisableIpfsClientUpdaterExtension))
+    g_brave_browser_process->ipfs_client_updater()->Register();
 #endif
 }
 
