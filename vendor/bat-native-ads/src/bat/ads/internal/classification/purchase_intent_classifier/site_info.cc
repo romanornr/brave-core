@@ -7,14 +7,14 @@
 #include <string>
 #include <vector>
 
-#include "bat/ads/internal/classification/purchase_intent_classifier/funnel_site_info.h"
+#include "bat/ads/internal/classification/purchase_intent_classifier/site_info.h"
 
 namespace ads {
 namespace classification {
 
-FunnelSiteInfo::FunnelSiteInfo() = default;
+SiteInfo::SiteInfo() = default;
 
-FunnelSiteInfo::FunnelSiteInfo(
+SiteInfo::SiteInfo(
     const PurchaseIntentSegmentList& segments,
     const std::string& url_netloc,
     const uint16_t weight)
@@ -22,20 +22,20 @@ FunnelSiteInfo::FunnelSiteInfo(
       url_netloc(url_netloc),
       weight(weight) {}
 
-FunnelSiteInfo::FunnelSiteInfo(
-    const FunnelSiteInfo& info) = default;
+SiteInfo::SiteInfo(
+    const SiteInfo& info) = default;
 
-FunnelSiteInfo::~FunnelSiteInfo() = default;
+SiteInfo::~SiteInfo() = default;
 
-bool FunnelSiteInfo::operator==(
-    const FunnelSiteInfo& rhs) const {
+bool SiteInfo::operator==(
+    const SiteInfo& rhs) const {
   return segments == rhs.segments &&
       url_netloc == rhs.url_netloc &&
       weight == rhs.weight;
 }
 
-bool FunnelSiteInfo::operator!=(
-    const FunnelSiteInfo& rhs) const {
+bool SiteInfo::operator!=(
+    const SiteInfo& rhs) const {
   return !(*this == rhs);
 }
 

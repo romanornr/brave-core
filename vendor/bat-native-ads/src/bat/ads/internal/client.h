@@ -119,6 +119,8 @@ class Client {
 
   InitializeCallback callback_;
 
+  std::string GetPath() const;
+
   void SaveState();
   void OnStateSaved(const Result result);
 
