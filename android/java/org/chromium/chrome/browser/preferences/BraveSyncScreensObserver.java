@@ -11,7 +11,7 @@ public interface BraveSyncScreensObserver {
     /**
      * Informs when the words code provided is incorrect
      */
-    public void onSyncError(String message);
+    //public void onSyncError(String message);
 
     /**
      * Informs when the seed in received

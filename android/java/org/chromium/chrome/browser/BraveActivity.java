@@ -31,7 +31,7 @@ import org.chromium.base.task.PostTask;
 import org.chromium.base.task.TaskTraits;
 import org.chromium.chrome.R;
 import org.chromium.chrome.browser.BraveHelper;
-import org.chromium.chrome.browser.BraveSyncWorker;
+//import org.chromium.chrome.browser.BraveSyncWorker;
 import org.chromium.chrome.browser.bookmarks.BookmarkBridge;
 import org.chromium.chrome.browser.bookmarks.BookmarkModel;
 import org.chromium.chrome.browser.dependency_injection.ChromeActivityComponent;
@@ -86,7 +86,7 @@ public abstract class BraveActivity<C extends ChromeActivityComponent> extends C
     public static final String BRAVE_BLOG_URL = "http://www.brave.com/blog";
 
     // Sync worker
-    public BraveSyncWorker mBraveSyncWorker;
+    //public BraveSyncWorker mBraveSyncWorker;
 
     @Override
     public void onResumeWithNative() {
@@ -201,9 +201,9 @@ public abstract class BraveActivity<C extends ChromeActivityComponent> extends C
         setBgBraveAdsDefaultOff();
 
         Context app = ContextUtils.getApplicationContext();
-        if (null != app && (this instanceof ChromeTabbedActivity)) {
-            mBraveSyncWorker = new BraveSyncWorker(app);
-        }
+        // if (null != app && (this instanceof ChromeTabbedActivity)) {
+        //     mBraveSyncWorker = new BraveSyncWorker(app);
+        // }
 
         OnboardingActivity onboardingActivity = null;
         for (Activity ref : ApplicationStatus.getRunningActivities()) {
@@ -225,28 +225,28 @@ public abstract class BraveActivity<C extends ChromeActivityComponent> extends C
             showBraveRateDialog();
     }
 
-    @Override
-    public void addOrEditBookmark(final Tab tabToBookmark) {
-        long tempBookmarkId = BookmarkBridge.getUserBookmarkIdForTab(tabToBookmark);
-        final boolean bCreateBookmark = (BookmarkId.INVALID_ID == tempBookmarkId);
-
-        super.addOrEditBookmark(tabToBookmark);
-
-        final long bookmarkId = BookmarkBridge.getUserBookmarkIdForTab(tabToBookmark);
-        final BookmarkModel bookmarkModel = new BookmarkModel();
-
-        bookmarkModel.finishLoadingBookmarkModel(() -> {
-            // Gives up the bookmarking if the tab is being destroyed.
-            BookmarkId newBookmarkId = new BookmarkId(bookmarkId, BookmarkType.NORMAL);
-            if (!((TabImpl)tabToBookmark).isClosing() && ((TabImpl)tabToBookmark).isInitialized()) {
-                if (null != mBraveSyncWorker && null != newBookmarkId) {
-                    mBraveSyncWorker.CreateUpdateBookmark(bCreateBookmark, bookmarkModel.getBookmarkById(newBookmarkId));
-                    bookmarkModel.destroy();
-                }
-            }
-            bookmarkModel.destroy();
-        });
-    }
+    // @Override
+    // public void addOrEditBookmark(final Tab tabToBookmark) {
+    //     long tempBookmarkId = BookmarkBridge.getUserBookmarkIdForTab(tabToBookmark);
+    //     final boolean bCreateBookmark = (BookmarkId.INVALID_ID == tempBookmarkId);
+    //
+    //     super.addOrEditBookmark(tabToBookmark);
+    //
+    //     final long bookmarkId = BookmarkBridge.getUserBookmarkIdForTab(tabToBookmark);
+    //     final BookmarkModel bookmarkModel = new BookmarkModel();
+    //
+    //     bookmarkModel.finishLoadingBookmarkModel(() -> {
+    //         // Gives up the bookmarking if the tab is being destroyed.
+    //         BookmarkId newBookmarkId = new BookmarkId(bookmarkId, BookmarkType.NORMAL);
+    //         if (!((TabImpl)tabToBookmark).isClosing() && ((TabImpl)tabToBookmark).isInitialized()) {
+    //             if (null != mBraveSyncWorker && null != newBookmarkId) {
+    //                 mBraveSyncWorker.CreateUpdateBookmark(bCreateBookmark, bookmarkModel.getBookmarkById(newBookmarkId));
+    //                 bookmarkModel.destroy();
+    //             }
+    //         }
+    //         bookmarkModel.destroy();
+    //     });
+    // }
 
     private void createNotificationChannel() {
         Context context = ContextUtils.getApplicationContext();
