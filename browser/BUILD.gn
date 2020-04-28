@@ -228,6 +228,8 @@ source_set("browser_process") {
       "android/brave_shields_content_settings.cc",
       "android/brave_shields_content_settings.h",
       "android/brave_stats_updater_android.cc",
+      "android/brave_sync_worker.cc",
+      "android/brave_sync_worker.h",
     ]
 
     if (brave_ads_enabled) {

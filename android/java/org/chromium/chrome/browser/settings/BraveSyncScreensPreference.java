@@ -245,33 +245,33 @@ public class BraveSyncScreensPreference extends BravePreferenceFragment
       mDeviceName = "STUB_DEVICE_NAME";
 
       BraveActivity mainActivity = BraveRewardsHelper.getBraveActivity();
-      if (null != mainActivity /*&& null != mainActivity.mBraveSyncWorker*/) {
+      if (null != mainActivity && null != mainActivity.mBraveSyncWorker) {
           if (null == mSyncScreensObserver) {
               mSyncScreensObserver = new BraveSyncScreensObserver() {
-                  // @Override
-                  // public void onSyncError(String message) {
-                  //     try {
-                  //         if (null == getActivity()) {
-                  //             return;
-                  //         }
-                  //         if (null != message && !message.isEmpty()) {
-                  //             if (message.equals("Credential server response 400. Signed request body of the client timestamp is required.")) {
-                  //                 message = getResources().getString(R.string.sync_requires_correct_time);
-                  //             }
-                  //             message = " [" + message + "]";
-                  //         }
-                  //         final String messageFinal = (null == message) ? "" : message;
-                  //         getActivity().runOnUiThread(new Runnable() {
-                  //             @Override
-                  //             public void run() {
-                  //                 cancelTimeoutTimer();
-                  //                 showEndDialog(getResources().getString(R.string.sync_device_failure) + messageFinal);
-                  //             }
-                  //         });
-                  //     } catch(Exception exc) {
-                  //         Log.e(TAG, "onSyncError exception: " + exc);
-                  //     }
-                  // }
+                  @Override
+                  public void onSyncError(String message) {
+                      try {
+                          if (null == getActivity()) {
+                              return;
+                          }
+                          if (null != message && !message.isEmpty()) {
+                              // if (message.equals("Credential server response 400. Signed request body of the client timestamp is required.")) {
+                              //     message = getResources().getString(R.string.sync_requires_correct_time);
+                              // }
+                              message = " [" + message + "]";
+                          }
+                          final String messageFinal = (null == message) ? "" : message;
+                          getActivity().runOnUiThread(new Runnable() {
+                              @Override
+                              public void run() {
+//                                  cancelTimeoutTimer();
+                                  showEndDialog(getResources().getString(R.string.sync_device_failure) + messageFinal);
+                              }
+                          });
+                      } catch(Exception exc) {
+                          Log.e(TAG, "onSyncError exception: " + exc);
+                      }
+                  }
 
                   @Override
                   public void onSeedReceived(String seed, boolean fromCodeWords, boolean afterInitialization) {
@@ -523,7 +523,8 @@ public class BraveSyncScreensPreference extends BravePreferenceFragment
                   }
               };
           }
-//          mainActivity.mBraveSyncWorker.InitJSWebView(mSyncScreensObserver);
+          mainActivity.mBraveSyncWorker.InitJSWebView(mSyncScreensObserver);
+          //mainActivity.mBraveSyncWorker.InitV2(mSyncScreensObserver);
       }
       // TODO(sergz): Uncomment sync service impl when we fully migrate on sync v2
       // Initialize mSyncServiceObserver
@@ -802,9 +803,10 @@ public class BraveSyncScreensPreference extends BravePreferenceFragment
           && v != mCancelLoadingButton && v != mQRCodeButton && v != mCodeWordsButton)) return;
 
       if (mScanChainCodeButton == v) {
-          showAddDeviceNameDialog(false);
+          showAddDeviceNameDialog(false /*createNewChain*/);
       } else if (mStartNewChainButton == v) {
-          showAddDeviceNameDialog(true);
+          // Creating a new chain
+          showAddDeviceNameDialog(true /*createNewChain*/);
       } else if (mMobileButton == v) {
           setAddMobileDeviceLayout();
       } else if (mLaptopButton == v) {
@@ -1189,10 +1191,10 @@ public class BraveSyncScreensPreference extends BravePreferenceFragment
                   // SharedPreferences.Editor editor = sharedPref.edit();
                   // editor.putString(BraveSyncWorker.PREF_SYNC_DEVICE_NAME, mDeviceName);
                   // editor.apply();
-                  if (!createNewChain) {
-                      setJoinExistingChainLayout();
-                  } else {
+                  if (createNewChain) {
                       setNewChainLayout();
+                  } else {
+                      setJoinExistingChainLayout();
                   }
               }
           }
