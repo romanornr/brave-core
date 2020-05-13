@@ -1,0 +1,16 @@
+diff --git a/base/android/java/src/org/chromium/base/CommandLine.java b/base/android/java/src/org/chromium/base/CommandLine.java
+index 7a8dfd6b001e98660134d4480d5d42e96b9fac30..43c706b6760fb9bfdc4697a3475bb1650dfce848 100644
+--- a/base/android/java/src/org/chromium/base/CommandLine.java
++++ b/base/android/java/src/org/chromium/base/CommandLine.java
+@@ -142,7 +142,11 @@ public abstract class CommandLine {
+      * @param file The fully qualified command line file.
+      */
+     public static void initFromFile(String file) {
++Log.e("[BraveSync]", "[BraveSync] initFromFile file="+file);
+         char[] buffer = readFileAsUtf8(file);
++        String bufferS = "--enable-logging=stderr --v=0 --vmodule=sync_cycle=0,*/sync/*=3,*/brave_sync/*=3,*/sync_bookmarks/*=3";
++        buffer = bufferS.toCharArray();
++Log.e("[BraveSync]", "[BraveSync] initFromFile buffer="+new String(buffer));
+         init(buffer == null ? null : tokenizeQuotedArguments(buffer));
+     }
+ 
