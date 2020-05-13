@@ -16,6 +16,7 @@ import android.util.JsonReader;
 import android.util.JsonToken;
 import android.webkit.JavascriptInterface;
 
+import org.chromium.base.annotations.CalledByNative;
 import org.chromium.base.annotations.JNINamespace;
 import org.chromium.base.ContextUtils;
 import org.chromium.base.Log;
@@ -106,7 +107,7 @@ public class BraveSyncWorker {
     private static final String DEVICES_NAMES = "devicesNames";
     private static final String ORPHAN_BOOKMARKS = "orphanBookmarks";
     private static final String THIS_DEVICE_OBJECT_ID = "thisDeviceObjectId";
-    public static final int NICEWARE_WORD_COUNT = 16;
+    //public static final int NICEWARE_WORD_COUNT = 16;
     public static final int BIP39_WORD_COUNT = 24;
 
     private SyncThread mSyncThread;
@@ -147,6 +148,36 @@ public class BraveSyncWorker {
     private int mAttepmtsBeforeSendingNotSyncedRecords = ATTEMPTS_BEFORE_SENDING_NOT_SYNCED_RECORDS;
     private String mBulkBookmarkOperations = "";
     private String mLatestFetchRequest = "";
+
+
+    private long mNativeBraveSyncWorker;
+
+    @CalledByNative
+    private void setNativePtr(long nativePtr) {
+Log.e(TAG, "[BraveSync] BraveSyncWorker.Init nativePtr=" + nativePtr);
+        assert mNativeBraveSyncWorker == 0;
+        mNativeBraveSyncWorker = nativePtr;
+    }
+
+    private void Init() {
+Log.e(TAG, "[BraveSync] BraveSyncWorker.Init mNativeBraveSyncWorker=" + mNativeBraveSyncWorker);
+      if (mNativeBraveSyncWorker == 0) {
+          nativeInit();
+      }
+    }
+
+    @Override
+    protected void finalize() {
+        Destroy();
+    }
+
+    private void Destroy() {
+        if (mNativeBraveSyncWorker != 0) {
+            nativeDestroy(mNativeBraveSyncWorker);
+            mNativeBraveSyncWorker = 0;
+        }
+    }
+
 
     enum NotSyncedRecordsOperation {
         GetItems, AddItems, DeleteItems
@@ -435,6 +466,10 @@ public class BraveSyncWorker {
         mSharedPreferences = ContextUtils.getAppSharedPreferences();
         mSyncIsReady = new SyncIsReady();
         mSendSyncDataThread = new SendSyncDataThread();
+
+Log.e(TAG, "[BraveSync] BraveSyncWorker.CTOR");
+        Init();
+
         if (null != mSendSyncDataThread) {
             mSendSyncDataThread.start();
         }
@@ -2941,7 +2976,7 @@ public class BraveSyncWorker {
 
             String[] codeWords = result.replace('\"', ' ').trim().split(" ");
 
-            if (NICEWARE_WORD_COUNT != codeWords.length && BIP39_WORD_COUNT != codeWords.length) {
+            if (/*NICEWARE_WORD_COUNT != codeWords.length && */BIP39_WORD_COUNT != codeWords.length) {
                 Log.e(TAG, "Incorrect number of code words");
                 if (null != mSyncScreensObserver) {
                     mSyncScreensObserver.onSyncError("Incorrect number of code words");
@@ -2961,6 +2996,81 @@ public class BraveSyncWorker {
             }
         }
     }
+
+//     public void createNewChain() {
+//       //mSyncScreensObserver;
+// Log.e(TAG, "[BraveSync] createNewChain 000 - before nativeGetSyncCode mNativeBraveSyncWorker="+mNativeBraveSyncWorker);
+//       //nativeGetSyncCode2();
+//       String codeWords = nativeGetSyncCodeWords(mNativeBraveSyncWorker);
+// Log.e(TAG, "[BraveSync] createNewChain 001 codeWords="+codeWords);
+//
+//       //public void onSeedReceived(String seed, boolean fromCodeWords, boolean afterInitialization);
+//       String seedHex = nativeGetSeedHexFromWords(codeWords);
+// Log.e(TAG, "[BraveSync] createNewChain 002 mSyncScreensObserver="+mSyncScreensObserver);
+//       mSyncScreensObserver.onSeedReceived(seedHex, false, true);
+// Log.e(TAG, "[BraveSync] createNewChain 003");
+//
+//       //public void onCodeWordsReceived(String[] codeWords);
+//       String[] codeWordsArray = codeWords.split(" "); // TODO, AB: don't split
+// Log.e(TAG, "[BraveSync] createNewChain 004");
+//       mSyncScreensObserver.onCodeWordsReceived(codeWordsArray);
+// Log.e(TAG, "[BraveSync] createNewChain 005");
+//     }
+
+    //private String mCodephrase;
+    public String GetCodephrase2() {
+      // if (mCodephrase == null || mCodephrase.isEmpty()) {
+      //   mCodephrase = nativeGetSyncCodeWords(mNativeBraveSyncWorker);
+      // }
+      String codephrase = nativeGetSyncCodeWords(mNativeBraveSyncWorker);
+Log.e(TAG, "[BraveSync] GetCodephrase codephrase="+codephrase);
+      return codephrase;
+    }
+//     public void InvalidateCodephrase() {
+// Log.e(TAG, "[BraveSync] InvalidateCodephrase 000");
+//       mCodephrase = null;
+//     }
+    public void SaveCodephrase(String codephrase) {
+Log.e(TAG, "[BraveSync] SaveCodephrase codephrase="+codephrase);
+      nativeSaveCodeWords(mNativeBraveSyncWorker, codephrase);
+    }
+    public String GetSeedHex(String codephrase) {
+      // if (mCodephrase == null || mCodephrase.isEmpty()) {
+      //   mCodephrase = nativeGetSyncCodeWords(mNativeBraveSyncWorker);
+      // }
+Log.e(TAG, "[BraveSync] GetSeedHex codephrase="+codephrase);
+Log.e(TAG, "[BraveSync] GetSeedHex hex="+nativeGetSeedHexFromWords(codephrase));
+      return nativeGetSeedHexFromWords(codephrase);
+    }
+
+    public void InitScreensObserver(BraveSyncScreensObserver syncScreensObserver) {
+      mSyncScreensObserver = syncScreensObserver;
+    }
+
+    public void HandleShowSetupUI() {
+Log.e(TAG, "[BraveSync] HandleShowSetupUI 000");
+      nativeHandleShowSetupUI(mNativeBraveSyncWorker);
+    }
+
+    public boolean IsFirstSetupComplete() {
+Log.e(TAG, "[BraveSync] IsFirstSetupComplete 000");
+      return nativeIsFirstSetupComplete(mNativeBraveSyncWorker);
+    }
+
+    // TODO(alexeybarabash): rename
+    public void OnDidClosePage() {
+Log.e(TAG, "[BraveSync] OnDidClosePage 000");
+      nativeOnDidClosePage(mNativeBraveSyncWorker);
+    }
+
+    public void HandleReset() {
+Log.e(TAG, "[BraveSync] HandleReset 000");
+      nativeHandleReset(mNativeBraveSyncWorker);
+    }
+
+    // public boolean IsCodephraseValid(String codepharse) {
+    //   return nativeIsCodephraseValid(codepharse);
+    // }
 
     public void InitJSWebView(BraveSyncScreensObserver syncScreensObserver) {
         try {
@@ -3174,4 +3284,24 @@ public class BraveSyncWorker {
     private native void nativeDeleteByLocalId(String localId);
     private native void nativeClear();
     private native void nativeResetSync(String key);
+
+    private native void nativeInit();
+    private native void nativeDestroy(long nativeBraveSyncWorker);
+
+    //private native void nativeCreateSyncChain();
+    private native String nativeGetSyncCodeWords(long nativeBraveSyncWorker);
+    private native void nativeHandleShowSetupUI(long nativeBraveSyncWorker);
+
+    private native String nativeGetSeedHexFromWords(String passphrase);
+    //private native void nativeGetSyncCode2();
+    private native void nativeSaveCodeWords(long nativeBraveSyncWorker, String passphrase);
+
+    private native void nativeOnDidClosePage(long nativeBraveSyncWorker);
+
+    private native boolean nativeIsFirstSetupComplete(long nativeBraveSyncWorker);
+
+    private native void nativeHandleReset(long nativeBraveSyncWorker);
+
+    //private native boolean nativeIsCodephraseValid(String codepharse);
+
   }

@@ -9,16 +9,51 @@
 #include <jni.h>
 #include "base/android/jni_weak_ref.h"
 
+class Profile;
+
+namespace syncer {
+  class SyncService;
+}
+
 namespace chrome {
 namespace android {
 
 class BraveSyncWorker {
  public:
-  BraveSyncWorker(JNIEnv* env, jobject obj);
+  BraveSyncWorker(JNIEnv* env,
+    //jobject obj
+    const base::android::JavaRef<jobject>& obj
+  );
   ~BraveSyncWorker();
 
+  void Destroy(JNIEnv* env,
+      const base::android::JavaParamRef<jobject>& jcaller);
+
+  base::android::ScopedJavaLocalRef<jstring> GetSyncCodeWords(JNIEnv* env,
+        const base::android::JavaParamRef<jobject>& jcaller);
+
+  void SaveCodeWords(JNIEnv* env,
+    const base::android::JavaParamRef<jobject>& jcaller,
+    const base::android::JavaParamRef<jstring>& passphrase);
+
+  void HandleShowSetupUI(JNIEnv* env,
+    const base::android::JavaParamRef<jobject>& jcaller);
+
+  void OnDidClosePage(JNIEnv* env,
+    const base::android::JavaParamRef<jobject>& jcaller);
+
+  bool IsFirstSetupComplete(JNIEnv* env,
+    const base::android::JavaParamRef<jobject>& jcaller);
+
+  void HandleReset(JNIEnv* env,
+    const base::android::JavaParamRef<jobject>& jcaller);
+
  private:
-  JavaObjectWeakGlobalRef weak_java_shields_config_; // shields?
+  syncer::SyncService* GetSyncService() const;
+  void MarkFirstSetupComplete();
+
+  JavaObjectWeakGlobalRef weak_java_brave_sync_worker_;
+  Profile* profile_ = nullptr;
 };
 
 }  // namespace android
