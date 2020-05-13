@@ -6,35 +6,35 @@
 package org.chromium.components.sync;
 
 // see org.brave.bytecode.BraveAndroidSyncSettingsAdapter
-public class BraveAndroidSyncSettings extends AndroidSyncSettings {
-    private boolean mIsSyncable;
-
-    private boolean mChromeSyncEnabled;
-
-    private boolean mMasterSyncEnabled;
-
-	public BraveAndroidSyncSettings(SyncContentResolverDelegate syncContentResolverDelegate) {
-        super(syncContentResolverDelegate, null);
-    }
-
-    public void setChromeSyncEnabled(boolean value) {
-    	mChromeSyncEnabled = false;
-    	notifyObservers();
-    }
-
-    public boolean updateCachedSettings() {
-    	boolean oldChromeSyncEnabled = mChromeSyncEnabled;
-        boolean oldMasterSyncEnabled = mMasterSyncEnabled;
-
-        mIsSyncable = false;
-        mChromeSyncEnabled = false;
-        mMasterSyncEnabled = false;
-
-        return oldChromeSyncEnabled != mChromeSyncEnabled
-                || oldMasterSyncEnabled != mMasterSyncEnabled;
-    }
-
-    public void notifyObservers() {
-        assert false;
-    }
-}
+// public class BraveAndroidSyncSettings extends AndroidSyncSettings {
+//     private boolean mIsSyncable;
+//
+//     private boolean mChromeSyncEnabled;
+//
+//     private boolean mMasterSyncEnabled;
+//
+// 	public BraveAndroidSyncSettings(SyncContentResolverDelegate syncContentResolverDelegate) {
+//         super(syncContentResolverDelegate, null);
+//     }
+//
+//     public void setChromeSyncEnabled(boolean value) {
+//     	mChromeSyncEnabled = false;
+//     	notifyObservers();
+//     }
+//
+//     public boolean updateCachedSettings() {
+//     	boolean oldChromeSyncEnabled = mChromeSyncEnabled;
+//         boolean oldMasterSyncEnabled = mMasterSyncEnabled;
+//
+//         mIsSyncable = false;
+//         mChromeSyncEnabled = false;
+//         mMasterSyncEnabled = false;
+//
+//         return oldChromeSyncEnabled != mChromeSyncEnabled
+//                 || oldMasterSyncEnabled != mMasterSyncEnabled;
+//     }
+//
+//     public void notifyObservers() {
+//         assert false;
+//     }
+// }
