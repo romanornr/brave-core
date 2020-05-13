@@ -59,7 +59,8 @@ const char kBraveSyncServiceURL[] = "https://sync-v2.brave.com/v2";
 // For local server development "http://localhost:8295/v2 can also be overriden
 // by switches::kSyncServiceURL
 // dev
-const char kBraveSyncServiceURL[] = "https://sync-v2.brave.software/v2";
+//const char kBraveSyncServiceURL[] = "https://sync-v2.brave.software/v2";
+const char kBraveSyncServiceURL[] = "http://192.168.0.175:8295/v2";
 #endif
 }  // namespace
 
