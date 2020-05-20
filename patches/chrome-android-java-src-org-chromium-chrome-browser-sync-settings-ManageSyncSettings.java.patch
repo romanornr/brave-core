@@ -10,4 +10,26 @@ index 4a7c610cec562ed067a86629b8a6f5d0b8758ddf..e5b2f7a726b7efe4d3f5dfe2322a1d37
 +public class ManageSyncSettings extends org.chromium.chrome.browser.settings.BravePreferenceFragment
          implements PassphraseDialogFragment.Listener, PassphraseCreationDialogFragment.Listener,
                     PassphraseTypeDialogFragment.Listener, Preference.OnPreferenceChangeListener,
-                    ProfileSyncService.SyncStateChangedListener,
+                    ProfileSyncService.SyncStateChangedListener {
+@@ -145,6 +145,11 @@ public class ManageSyncSettings extends PreferenceFragmentCompat
+
+         // Prevent sync settings changes from taking effect until the user leaves this screen.
+         mSyncSetupInProgressHandle = mProfileSyncService.getSetupInProgressHandle();
++
++        // TODO(alexey): subclass and pull out to avoid patch
++        getPreferenceScreen().removePreference(mGoogleActivityControls);
++        getPreferenceScreen().removePreference(mSyncEncryption);
++        getPreferenceScreen().removePreference(mManageSyncData);
+     }
+
+     @Override
+@@ -218,7 +223,8 @@ public class ManageSyncSettings extends PreferenceFragmentCompat
+     private void updateSyncPreferences() {
+         // TODO(crbug.com/1041815): Migrate away from ChromeSigninController and use IdentityManager
+         // instead.
+-        String signedInAccountName = ChromeSigninController.get().getSignedInAccountName();
++        // TODO(alexey): subclass ChromeSigninController and override getSignedInAccountName to avoid patch: String signedInAccountName = ChromeSigninController.get().getSignedInAccountName();
++        String signedInAccountName = "BRAVE-STUB-ACCOUNT-NAME";
+         if (signedInAccountName == null) {
+             // May happen if account is removed from the device while this screen is shown.
+             getActivity().finish();

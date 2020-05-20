@@ -22,7 +22,6 @@ import android.graphics.Color;
 import android.hardware.Camera;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.CountDownTimer;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.AppCompatImageView;
@@ -83,6 +82,8 @@ import org.chromium.chrome.browser.qrreader.CameraSource;
 import org.chromium.chrome.browser.qrreader.CameraSourcePreview;
 import org.chromium.chrome.browser.settings.BravePreferenceFragment;
 import org.chromium.chrome.browser.settings.SettingsActivity;
+import org.chromium.chrome.browser.settings.SettingsLauncher;
+import org.chromium.chrome.browser.settings.sync.ManageSyncSettings;
 import org.chromium.chrome.browser.sync.BraveSyncService;
 import org.chromium.ui.KeyboardVisibilityDelegate;
 import org.chromium.ui.base.DeviceFormFactor;
@@ -142,6 +143,7 @@ public class BraveSyncScreensPreference extends BravePreferenceFragment
   private Button mCancelLoadingButton;
   private Timer mCancelLoadingButtonUpdater;
   private Button mRemoveDeviceButton;
+  private Button mShowCategoriesButton;
   private Button mQRCodeButton;
   private Button mCodeWordsButton;
   // Brave Sync message text view
@@ -732,6 +734,11 @@ Log.e(TAG, "onCodeWordsReceived words=" + words);
           mRemoveDeviceButton.setOnClickListener(this);
       }
 
+      mShowCategoriesButton = (Button) getView().findViewById(R.id.brave_sync_btn_show_categories);
+      if (null != mShowCategoriesButton) {
+          mShowCategoriesButton.setOnClickListener(this);
+      }
+
       mQRCodeButton = (Button) getView().findViewById(R.id.brave_sync_qr_code_off_btn);
       if (null != mQRCodeButton) {
           mQRCodeButton.setOnClickListener(this);
@@ -844,7 +851,7 @@ Log.e(TAG, "[BraveSync] BraveSyncScreensPreference.onClick");
       if ((getActivity() == null) || (v != mScanChainCodeButton && v != mStartNewChainButton
           && v != mEnterCodeWordsButton && v != mDoneButton && v != mDoneLaptopButton
           && v != mUseCameraButton && v != mConfirmCodeWordsButton && v != mMobileButton && v != mLaptopButton
-          && v != mPasteButton && v != mCopyButton && v != mRemoveDeviceButton && v != mAddDeviceButton
+          && v != mPasteButton && v != mCopyButton && v != mRemoveDeviceButton && v != mShowCategoriesButton && v != mAddDeviceButton
           && v != mCancelLoadingButton && v != mQRCodeButton && v != mCodeWordsButton)) return;
 
       if (mScanChainCodeButton == v) {
@@ -1009,6 +1016,10 @@ Log.e(TAG, "[BraveSync] mRemoveDeviceButton");
           //mainActivity.mBraveSyncWorker.HandleReset();
           //deleteDeviceDialog(deviceToDelete.mDeviceName, deviceToDelete.mDeviceId, deviceToDelete.mObjectId, mRemoveDeviceButton);
           deleteDeviceDialog("This device", "-1", "???", mRemoveDeviceButton);
+      } else if (mShowCategoriesButton == v) {
+Log.e(TAG, "[BraveSync] mShowCategoriesButton");
+          SettingsLauncher.getInstance().launchSettingsPage(
+                  getContext(), ManageSyncSettings.class);
       } else if (mAddDeviceButton == v) {
 Log.e(TAG, "[BraveSync] mAddDeviceButton");
           setNewChainLayout();
