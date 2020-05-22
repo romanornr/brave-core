@@ -18,6 +18,8 @@ import android.webkit.JavascriptInterface;
 
 import org.chromium.base.annotations.CalledByNative;
 import org.chromium.base.annotations.JNINamespace;
+import org.chromium.base.task.PostTask;
+import org.chromium.base.task.TaskTraits;
 import org.chromium.base.ContextUtils;
 import org.chromium.base.Log;
 import org.chromium.base.ThreadUtils;
@@ -69,15 +71,6 @@ import java.io.UnsupportedEncodingException;
 @JNINamespace("chrome::android")
 public class BraveSyncWorker {
     public static final String TAG = "SYNC";
-    public static final String PREF_NAME = "SyncPreferences";
-    private static final String PREF_LAST_FETCH_NAME = "TimeLastFetch";
-    private static final String PREF_LATEST_DEVICE_RECORD_TIMESTAMPT_NAME = "LatestDeviceRecordTime";
-    private static final String PREF_LAST_TIME_SEND_NOT_SYNCED_NAME = "TimeLastSendNotSynced";
-    public static final String PREF_DEVICE_ID = "DeviceId";
-    public static final String PREF_BASE_ORDER = "BaseOrder";
-    public static final String PREF_LAST_ORDER = "LastOrder";
-    public static final String PREF_SEED = "Seed";
-    public static final String PREF_SYNC_DEVICE_NAME = "SyncDeviceName";
     private static final int SYNC_SLEEP_ATTEMPTS_COUNT = 20;
     private static final int INTERVAL_TO_FETCH_RECORDS = 1000 * 60;    // Milliseconds
     private static final int INTERVAL_TO_SEND_SYNC_RECORDS = 1000 * 60;    // Milliseconds
@@ -85,18 +78,10 @@ public class BraveSyncWorker {
     private static final Long INTERVAL_RESEND_NOT_SYNCED = 1000L * 60L * 10L; // 10 minutes
     private static final int SEND_RECORDS_COUNT_LIMIT = 1000;
     private static final int FETCH_RECORDS_CHUNK_SIZE = 300;
-    private static final String PREF_SYNC_SWITCH = "sync_switch";
-    private static final String PREF_SYNC_BOOKMARKS = "brave_sync_bookmarks";
-    public static final String PREF_SYNC_TABS = "brave_sync_tabs";
-    public static final String PREF_SYNC_HISTORY = "brave_sync_history";
-    public static final String PREF_SYNC_AUTOFILL_PASSWORDS = "brave_sync_autofill_passwords";
-    public static final String PREF_SYNC_PAYMENT_SETTINGS = "brave_sync_payment_settings";
     public static final String CREATE_RECORD = "0";
     public static final String UPDATE_RECORD = "1";
     public static final String DELETE_RECORD = "2";
     private static final int ATTEMPTS_BEFORE_SENDING_NOT_SYNCED_RECORDS = 1;
-
-    private final SharedPreferences mSharedPreferences;
 
     private static final String ANDROID_SYNC_JS = "android_sync.js";
     private static final String BUNDLE_JS = "bundle.js";
@@ -463,12 +448,13 @@ Log.e(TAG, "[BraveSync] BraveSyncWorker.Init mNativeBraveSyncWorker=" + mNativeB
         mJSWebContents = null;
         mJSWebContentsInjector = null;
         mJSViewEventSink = null;
-        mSharedPreferences = ContextUtils.getAppSharedPreferences();
         mSyncIsReady = new SyncIsReady();
         mSendSyncDataThread = new SendSyncDataThread();
 
 Log.e(TAG, "[BraveSync] BraveSyncWorker.CTOR");
         Init();
+
+        (new MigrationFromV1()).MigrateFromSyncV1();
 
         if (null != mSendSyncDataThread) {
             mSendSyncDataThread.start();
@@ -479,6 +465,70 @@ Log.e(TAG, "[BraveSync] BraveSyncWorker.CTOR");
         }
         GetDefaultFolderId();
     }
+
+    private class MigrationFromV1 {
+        // Deprecated
+        public static final String PREF_NAME = "SyncPreferences";
+        private static final String PREF_LAST_FETCH_NAME = "TimeLastFetch";
+        private static final String PREF_LATEST_DEVICE_RECORD_TIMESTAMPT_NAME = "LatestDeviceRecordTime";
+        private static final String PREF_LAST_TIME_SEND_NOT_SYNCED_NAME = "TimeLastSendNotSynced";
+        public static final String PREF_DEVICE_ID = "DeviceId";
+        public static final String PREF_BASE_ORDER = "BaseOrder";
+        public static final String PREF_LAST_ORDER = "LastOrder";
+        public static final String PREF_SEED = "Seed";
+        public static final String PREF_SYNC_DEVICE_NAME = "SyncDeviceName";
+        private static final String PREF_SYNC_SWITCH = "sync_switch";
+        private static final String PREF_SYNC_BOOKMARKS = "brave_sync_bookmarks";
+        public static final String PREF_SYNC_TABS = "brave_sync_tabs"; // never used
+        public static final String PREF_SYNC_HISTORY = "brave_sync_history"; // never used
+        public static final String PREF_SYNC_AUTOFILL_PASSWORDS = "brave_sync_autofill_passwords"; // never used
+        public static final String PREF_SYNC_PAYMENT_SETTINGS = "brave_sync_payment_settings"; // never used
+
+        private boolean HaveSyncV1Prefs() {
+            SharedPreferences sharedPref = mContext.getSharedPreferences(PREF_NAME, 0);
+
+            String deviceId = sharedPref.getString(PREF_DEVICE_ID, null);
+            if (null == deviceId) {
+                return false;
+            }
+            return true;
+        }
+
+        private void DeleteSyncV1Prefs() {
+            SharedPreferences sharedPref = mContext.getSharedPreferences(PREF_NAME, 0);
+            SharedPreferences.Editor editor = sharedPref.edit();
+            editor.remove(PREF_LAST_FETCH_NAME)
+                  .remove(PREF_LATEST_DEVICE_RECORD_TIMESTAMPT_NAME)
+                  .remove(PREF_LAST_TIME_SEND_NOT_SYNCED_NAME)
+                  .remove(PREF_SYNC_SWITCH)
+                  .remove(PREF_SYNC_BOOKMARKS)
+                  .remove(PREF_SYNC_TABS)
+                  .remove(PREF_SYNC_HISTORY)
+                  .remove(PREF_SYNC_AUTOFILL_PASSWORDS)
+                  .remove(PREF_SYNC_PAYMENT_SETTINGS)
+                  .remove(PREF_DEVICE_ID)
+                  .remove(PREF_BASE_ORDER)
+                  .remove(PREF_LAST_ORDER)
+                  .remove(PREF_SYNC_DEVICE_NAME)
+                  .commit();
+        }
+
+        private void DeleteSyncV1LevelDb() {
+            nativeDestroyV1LevelDb();
+        }
+
+        public void MigrateFromSyncV1() {
+            // Do all migration work in file IO thread because we may need to
+            // read shared preferences and delete level db
+            PostTask.postTask(TaskTraits.BEST_EFFORT_MAY_BLOCK, () ->
+            {
+                if (HaveSyncV1Prefs()) {
+                    DeleteSyncV1Prefs();
+                    DeleteSyncV1LevelDb();
+                }
+            });
+        }
+    };
 
     private String convertStreamToString(InputStream is) {
         Scanner s = new Scanner(is).useDelimiter("\\A");
@@ -1072,16 +1122,16 @@ Log.e(TAG, "[BraveSync] BraveSyncWorker.CTOR");
         //Log.i(TAG, "!!!deviceId == " + mDeviceId);
         //Log.i(TAG, "!!!seed == " + mSeed);
         // Save seed and deviceId in preferences
-        SharedPreferences sharedPref = mContext.getSharedPreferences(PREF_NAME, 0);
-        SharedPreferences.Editor editor = sharedPref.edit();
-        editor.putString(PREF_DEVICE_ID, mDeviceId);
-        if (null != mSeed && !mSeed.isEmpty()) {
-            if (null != mSyncScreensObserver) {
-                mSyncScreensObserver.onSeedReceived(mSeed, false, true);
-            }
-            editor.putString(PREF_SEED, mSeed);
-        }
-        editor.apply();
+        // SharedPreferences sharedPref = mContext.getSharedPreferences(PREF_NAME, 0);
+        // SharedPreferences.Editor editor = sharedPref.edit();
+        // editor.putString(PREF_DEVICE_ID, mDeviceId);
+        // if (null != mSeed && !mSeed.isEmpty()) {
+        //     if (null != mSyncScreensObserver) {
+        //         mSyncScreensObserver.onSeedReceived(mSeed, false, true);
+        //     }
+        //     editor.putString(PREF_SEED, mSeed);
+        // }
+        // editor.apply();
         SetSyncEnabled(true);
     }
 
@@ -1228,8 +1278,9 @@ Log.e(TAG, "[BraveSync] BraveSyncWorker.CTOR");
     }
 
     private Long GetLatestDeviceRecordTime() {
-      SharedPreferences sharedPref = mContext.getSharedPreferences(PREF_NAME, 0);
-      Long latestDeviceRecordTimeL = sharedPref.getLong(PREF_LATEST_DEVICE_RECORD_TIMESTAMPT_NAME, 0);
+      // SharedPreferences sharedPref = mContext.getSharedPreferences(PREF_NAME, 0);
+      // Long latestDeviceRecordTimeL = sharedPref.getLong(PREF_LATEST_DEVICE_RECORD_TIMESTAMPT_NAME, 0);
+      Long latestDeviceRecordTimeL = 0L;
       return latestDeviceRecordTimeL;
     }
 
@@ -1237,10 +1288,10 @@ Log.e(TAG, "[BraveSync] BraveSyncWorker.CTOR");
       try {
           Long latestDeviceRecordTimeL = Long.parseLong(latestDeviceRecordTime);
           // Save last fetch time in preferences
-          SharedPreferences sharedPref = mContext.getSharedPreferences(PREF_NAME, 0);
-          SharedPreferences.Editor editor = sharedPref.edit();
-          editor.putLong(PREF_LATEST_DEVICE_RECORD_TIMESTAMPT_NAME, latestDeviceRecordTimeL);
-          editor.apply();
+          // SharedPreferences sharedPref = mContext.getSharedPreferences(PREF_NAME, 0);
+          // SharedPreferences.Editor editor = sharedPref.edit();
+          // editor.putLong(PREF_LATEST_DEVICE_RECORD_TIMESTAMPT_NAME, latestDeviceRecordTimeL);
+          // editor.apply();
       } catch (NumberFormatException e) {
       }
     }
@@ -1256,8 +1307,8 @@ Log.e(TAG, "[BraveSync] BraveSyncWorker.CTOR");
                 // It is the very first time of the sync start
                 // Set device name
                 if (null == mDeviceName || mDeviceName.isEmpty()) {
-                    SharedPreferences sharedPref = mContext.getSharedPreferences(PREF_NAME, 0);
-                    mDeviceName = sharedPref.getString(PREF_SYNC_DEVICE_NAME, "");
+                    // SharedPreferences sharedPref = mContext.getSharedPreferences(PREF_NAME, 0);
+                    // mDeviceName = sharedPref.getString(PREF_SYNC_DEVICE_NAME, "");
                 }
                 SetUpdateDeleteDeviceName(CREATE_RECORD, mDeviceName, mDeviceId, "");
                 SendAllLocalBookmarks();
@@ -1296,10 +1347,10 @@ Log.e(TAG, "[BraveSync] BraveSyncWorker.CTOR");
                 try {
                     mTimeLastFetch = Long.parseLong(lastRecordFetchTime);
                     // Save last fetch time in preferences
-                    SharedPreferences sharedPref = mContext.getSharedPreferences(PREF_NAME, 0);
-                    SharedPreferences.Editor editor = sharedPref.edit();
-                    editor.putLong(PREF_LAST_FETCH_NAME, mTimeLastFetch);
-                    editor.apply();
+                    // SharedPreferences sharedPref = mContext.getSharedPreferences(PREF_NAME, 0);
+                    // SharedPreferences.Editor editor = sharedPref.edit();
+                    // editor.putLong(PREF_LAST_FETCH_NAME, mTimeLastFetch);
+                    // editor.apply();
                 } catch (NumberFormatException e) {
                 }
             }
@@ -1952,10 +2003,10 @@ Log.e(TAG, "[BraveSync] BraveSyncWorker.CTOR");
         }
         if (mLatestRecordTimeStampt.isEmpty()) {
             mTimeLastFetch = mTimeLastFetchExecuted;
-            SharedPreferences sharedPref = mContext.getSharedPreferences(PREF_NAME, 0);
-            SharedPreferences.Editor editor = sharedPref.edit();
-            editor.putLong(PREF_LAST_FETCH_NAME, mTimeLastFetch);
-            editor.apply();
+            // SharedPreferences sharedPref = mContext.getSharedPreferences(PREF_NAME, 0);
+            // SharedPreferences.Editor editor = sharedPref.edit();
+            // editor.putLong(PREF_LAST_FETCH_NAME, mTimeLastFetch);
+            // editor.apply();
             mFetchInProgress = false;
             SendNotSyncedRecords();
             if (SyncRecordType.BOOKMARKS.equals(categoryName) && mReorderBookmarks) {
@@ -2013,15 +2064,16 @@ Log.e(TAG, "[BraveSync] BraveSyncWorker.CTOR");
     }
 
     void SaveLastSendNotSyncedTime(Long lastTimeSendNotSynced) {
-      SharedPreferences sharedPref = mContext.getSharedPreferences(PREF_NAME, 0);
-      SharedPreferences.Editor editor = sharedPref.edit();
-      editor.putLong(PREF_LAST_TIME_SEND_NOT_SYNCED_NAME, lastTimeSendNotSynced);
-      editor.apply();
+      // SharedPreferences sharedPref = mContext.getSharedPreferences(PREF_NAME, 0);
+      // SharedPreferences.Editor editor = sharedPref.edit();
+      // editor.putLong(PREF_LAST_TIME_SEND_NOT_SYNCED_NAME, lastTimeSendNotSynced);
+      // editor.apply();
     }
 
     Long LoadLastSendNotSyncedTime() {
-      SharedPreferences sharedPref = mContext.getSharedPreferences(PREF_NAME, 0);
-      Long lastSendNotSyncedTime = sharedPref.getLong(PREF_LAST_TIME_SEND_NOT_SYNCED_NAME, 0);
+      // SharedPreferences sharedPref = mContext.getSharedPreferences(PREF_NAME, 0);
+      // Long lastSendNotSyncedTime = sharedPref.getLong(PREF_LAST_TIME_SEND_NOT_SYNCED_NAME, 0);
+      Long lastSendNotSyncedTime = 0l;
       return lastSendNotSyncedTime;
     }
 
@@ -2664,35 +2716,37 @@ Log.e(TAG, "[BraveSync] BraveSyncWorker.CTOR");
 
     public boolean IsSyncEnabled() {
         boolean prefSyncDefault = false;
-        boolean prefSync = mSharedPreferences.getBoolean(
-                PREF_SYNC_SWITCH, prefSyncDefault);
+        // boolean prefSync = mSharedPreferences.getBoolean(
+        //         PREF_SYNC_SWITCH, prefSyncDefault);
+        boolean prefSync = false;
         return prefSync;
     }
 
     public void SetSyncEnabled(boolean syncEnabled) {
-        mSharedPreferences.edit().putBoolean(PREF_SYNC_SWITCH, syncEnabled).apply();
+//        mSharedPreferences.edit().putBoolean(PREF_SYNC_SWITCH, syncEnabled).apply();
     }
 
     public boolean IsSyncBookmarksEnabled() {
         boolean prefSyncBookmarksDefault = true;
-        boolean prefSyncBookmarks = mSharedPreferences.getBoolean(
-                PREF_SYNC_BOOKMARKS, prefSyncBookmarksDefault);
+        // boolean prefSyncBookmarks = mSharedPreferences.getBoolean(
+        //         PREF_SYNC_BOOKMARKS, prefSyncBookmarksDefault);
+        boolean prefSyncBookmarks = true;
         return prefSyncBookmarks;
     }
 
     public void SetSyncBookmarksEnabled(boolean syncBookmarksEnabled) {
-        mSharedPreferences.edit().putBoolean(PREF_SYNC_BOOKMARKS, syncBookmarksEnabled).apply();
+//        mSharedPreferences.edit().putBoolean(PREF_SYNC_BOOKMARKS, syncBookmarksEnabled).apply();
     }
 
     class SyncThread extends Thread {
         @Override
         public void run() {
-            SharedPreferences sharedPref = mContext.getSharedPreferences(PREF_NAME, 0);
-            mTimeLastFetch = sharedPref.getLong(PREF_LAST_FETCH_NAME, 0);
-            mDeviceId = sharedPref.getString(PREF_DEVICE_ID, null);
-            mDeviceName = sharedPref.getString(PREF_SYNC_DEVICE_NAME, null);
-            mBaseOrder = sharedPref.getString(PREF_BASE_ORDER, null);
-            mLastOrder = sharedPref.getString(PREF_LAST_ORDER, null);
+            // SharedPreferences sharedPref = mContext.getSharedPreferences(PREF_NAME, 0);
+            // mTimeLastFetch = sharedPref.getLong(PREF_LAST_FETCH_NAME, 0);
+            // mDeviceId = sharedPref.getString(PREF_DEVICE_ID, null);
+            // mDeviceName = sharedPref.getString(PREF_SYNC_DEVICE_NAME, null);
+            // mBaseOrder = sharedPref.getString(PREF_BASE_ORDER, null);
+            // mLastOrder = sharedPref.getString(PREF_LAST_ORDER, null);
             InitOrphanBookmarks();
 
             for (;;) {
@@ -2766,15 +2820,15 @@ Log.e(TAG, "[BraveSync] BraveSyncWorker.CTOR");
         SetSyncEnabled(false);
         mSyncIsReady.Reset();
         mSyncIsReady.mShouldResetSync = true;
-        SharedPreferences sharedPref = mContext.getSharedPreferences(PREF_NAME, 0);
-        SharedPreferences.Editor editor = sharedPref.edit();
-        editor.remove(PREF_LAST_FETCH_NAME);
-        editor.remove(PREF_DEVICE_ID);
-        editor.remove(PREF_BASE_ORDER);
-        editor.remove(PREF_LAST_ORDER);
-        editor.remove(PREF_SEED);
-        editor.remove(PREF_SYNC_DEVICE_NAME);
-        editor.apply();
+        // SharedPreferences sharedPref = mContext.getSharedPreferences(PREF_NAME, 0);
+        // SharedPreferences.Editor editor = sharedPref.edit();
+        // editor.remove(PREF_LAST_FETCH_NAME);
+        // editor.remove(PREF_DEVICE_ID);
+        // editor.remove(PREF_BASE_ORDER);
+        // editor.remove(PREF_LAST_ORDER);
+        // editor.remove(PREF_SEED);
+        // editor.remove(PREF_SYNC_DEVICE_NAME);
+        // editor.apply();
         final String seed = mSeed;
         mSeed = null;
         mDeviceId = null;
@@ -2809,10 +2863,10 @@ Log.e(TAG, "[BraveSync] BraveSyncWorker.CTOR");
     public void InitSync(boolean calledFromUIThread, boolean startNewChain) {
           if (!startNewChain) {
               // Here we already supposed to get existing seed
-              SharedPreferences sharedPref = mContext.getSharedPreferences(PREF_NAME, 0);
-              if (null == mSeed || mSeed.isEmpty()) {
-                  mSeed = sharedPref.getString(PREF_SEED, null);
-              }
+              // SharedPreferences sharedPref = mContext.getSharedPreferences(PREF_NAME, 0);
+              // if (null == mSeed || mSeed.isEmpty()) {
+              //     mSeed = sharedPref.getString(PREF_SEED, null);
+              // }
               if (null == mSeed || mSeed.isEmpty()) {
                   return;
               }
@@ -2890,10 +2944,10 @@ Log.e(TAG, "[BraveSync] BraveSyncWorker.CTOR");
                 assert arg1 != null;
                 // Save base order before sending local bookmarks
                 mBaseOrder = arg1;
-                SharedPreferences sharedPref = mContext.getSharedPreferences(PREF_NAME, 0);
-                SharedPreferences.Editor editor = sharedPref.edit();
-                editor.putString(PREF_BASE_ORDER, mBaseOrder);
-                editor.apply();
+                // SharedPreferences sharedPref = mContext.getSharedPreferences(PREF_NAME, 0);
+                // SharedPreferences.Editor editor = sharedPref.edit();
+                // editor.putString(PREF_BASE_ORDER, mBaseOrder);
+                // editor.apply();
                 StartSync();
                 break;
               case "get-bookmark-order":
@@ -3195,10 +3249,10 @@ Log.e(TAG, "[BraveSync] HandleReset 000");
             }
             mLastOrder += newLastNumber;
         }
-        SharedPreferences sharedPref = mContext.getSharedPreferences(PREF_NAME, 0);
-        SharedPreferences.Editor editor = sharedPref.edit();
-        editor.putString(PREF_LAST_ORDER, mLastOrder);
-        editor.apply();
+        // SharedPreferences sharedPref = mContext.getSharedPreferences(PREF_NAME, 0);
+        // SharedPreferences.Editor editor = sharedPref.edit();
+        // editor.putString(PREF_LAST_ORDER, mLastOrder);
+        // editor.apply();
         return mLastOrder;
     }
 
@@ -3287,6 +3341,8 @@ Log.e(TAG, "[BraveSync] HandleReset 000");
 
     private native void nativeInit();
     private native void nativeDestroy(long nativeBraveSyncWorker);
+
+    private native void nativeDestroyV1LevelDb();
 
     //private native void nativeCreateSyncChain();
     private native String nativeGetSyncCodeWords(long nativeBraveSyncWorker);

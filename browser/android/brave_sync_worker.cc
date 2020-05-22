@@ -210,6 +210,17 @@ static void JNI_BraveSyncWorker_ResetSync(JNIEnv* env,
     //     base::android::ConvertJavaStringToUTF8(key));
 }
 
+static void JNI_BraveSyncWorker_DestroyV1LevelDb(JNIEnv* env,
+        const base::android::JavaParamRef<jobject>& obj) {
+  base::FilePath app_data_path;
+  base::PathService::Get(base::DIR_ANDROID_APP_DATA, &app_data_path);
+  base::FilePath dbFilePath = app_data_path.Append(DB_FILE_NAME);
+
+  leveldb::Status status = leveldb::DestroyDB(dbFilePath.value().c_str(),
+    leveldb::Options());
+  DLOG(INFO) << "[BraveSync] " << __func__ << " destroy DB status is "<<status.ToString();
+}
+
 //static void JNI_BraveSyncWorker_nativeGetSyncCode
 base::android::ScopedJavaLocalRef<jstring> BraveSyncWorker::GetSyncCodeWords
       (JNIEnv* env,
