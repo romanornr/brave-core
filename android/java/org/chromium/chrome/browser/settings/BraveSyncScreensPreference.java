@@ -249,9 +249,6 @@ Log.e(TAG, "[BraveSync] BraveSyncScreensPreference.onCreateView");
 Log.e(TAG, "[BraveSync] BraveSyncScreensPreference.onActivityCreated savedInstanceState=" + savedInstanceState);
       getActivity().setTitle(R.string.sign_in_sync);
 
-      // mDeviceName = BravePrefServiceBridge.getInstance().getSyncDeviceName();
-//      SharedPreferences sharedPref = getActivity().getApplicationContext().getSharedPreferences(BraveSyncWorker.PREF_NAME, 0);
-      //mDeviceName = sharedPref.getString(BraveSyncWorker.PREF_SYNC_DEVICE_NAME, "");
       mDeviceName = "STUB_DEVICE_NAME";
 
       BraveActivity mainActivity = BraveRewardsHelper.getBraveActivity();
@@ -305,14 +302,6 @@ Log.e(TAG, "onSeedReceived 103");
                               //  => HandleSetSyncCode
                               //
 
-
-
-
-                      //         // Save seed and deviceId in preferences
-                      //         SharedPreferences sharedPref = getActivity().getApplicationContext().getSharedPreferences(BraveSyncWorker.PREF_NAME, 0);
-                      //         SharedPreferences.Editor editor = sharedPref.edit();
-                      //         editor.putString(BraveSyncWorker.PREF_SEED, seed);
-                      //         editor.apply();
                               if (null == getActivity()) {
                                   return;
                               }
@@ -379,10 +368,6 @@ Log.e(TAG, "onSeedReceived 003 mScrollViewAddMobileDevice="+mScrollViewAddMobile
                                                   @Override
                                                   public void run() {
 //                                                      cancelTimeoutTimer();
-                                                      BraveActivity mainActivity = BraveRewardsHelper.getBraveActivity();
-                                                      if (null != mainActivity && null != mainActivity.mBraveSyncWorker) {
-                                                        mainActivity.mBraveSyncWorker.SetSyncEnabled(true);
-                                                      }
                                                       mQRCodeImage.setImageBitmap(bitmap);
                                                       mQRCodeImage.invalidate();
                                                   }
@@ -396,10 +381,10 @@ Log.e(TAG, "onSeedReceived 003 mScrollViewAddMobileDevice="+mScrollViewAddMobile
                                       getActivity().runOnUiThread(new Runnable() {
                                           @Override
                                           public void run() {
-                                              BraveActivity mainActivity = BraveRewardsHelper.getBraveActivity();
-                                              if (null != mainActivity && null != mainActivity.mBraveSyncWorker) {
-                                                  mainActivity.mBraveSyncWorker.GetCodeWords();
-                                              }
+//                                              BraveActivity mainActivity = BraveRewardsHelper.getBraveActivity();
+                                              // if (null != mainActivity && null != mainActivity.mBraveSyncWorker) {
+                                              //     mainActivity.mBraveSyncWorker.GetCodeWords();
+                                              // }
                                           }
                                       });
                                   }
@@ -1652,7 +1637,7 @@ Log.e(TAG, "[BraveSync] setAddLaptopLayout.runOnUiThread.run seedHex="+seedHex);
                   ThreadUtils.runOnUiThread(new Runnable() {
                       @Override
                       public void run() {
-                          mCancelLoadingButton.setVisibility(View.VISIBLE);
+//                          mCancelLoadingButton.setVisibility(View.VISIBLE);
                       }
                   });
               }

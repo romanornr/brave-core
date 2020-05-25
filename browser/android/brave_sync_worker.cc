@@ -6,14 +6,11 @@
 #include "brave/browser/android/brave_sync_worker.h"
 
 #include <string>
-//#include <iomanip>
 
 #include "base/android/jni_android.h"
 #include "base/android/jni_string.h"
 #include "base/strings/string_number_conversions.h"
 
-//#include "base/files/file_util.h"
-//#include "base/json/json_reader.h"
 #include "base/path_service.h"
 #include "brave/build/android/jni_headers/BraveSyncWorker_jni.h"
 #include "brave/components/brave_sync/brave_sync_prefs.h"
@@ -34,39 +31,14 @@
 namespace chrome {
 namespace android {
 
-#define DB_FILE_NAME      "brave_sync_db" // need this to clear V1 stuff on migrating
-
-leveldb::DB* g_level_db = nullptr;
-static std::mutex* g_pLevel_db_init_mutex = new std::mutex();
-
-// namespace {
-//
-// std::string ExtractObjectIdFromJson(const std::string& json) {
-//   // See java BraveSyncWorker.BraveSySaveObjectId
-//   // pack looks as
-//   // [{"objectId": "69, 224, 213, 24, 100, 92, 94, 82, 63, 236, 192, 154, 81, 237, 213, 154", "order": "255.255.255", "apiVersion": "0"}]  // NOLINT
-//   auto root = base::JSONReader::Read(json);
-//   if (root && root->is_list() && root->GetList().size() == 1 &&
-//       root->GetList()[0].is_dict()) {
-//     const std::string* object_id_string =
-//         root->GetList()[0].FindStringKey("objectId");
-//     if (object_id_string) {
-//       return *object_id_string;
-//     }
-//   }
-//   return std::string();
-// }
-//
-// }  // namespace
+// Keep this to clear V1 stuff on migrating
+#define DB_FILE_NAME      "brave_sync_db"
 
 BraveSyncWorker::BraveSyncWorker(JNIEnv* env,
-  //jobject obj
-  const base::android::JavaRef<jobject>& obj
-):
+  const base::android::JavaRef<jobject>& obj) :
   weak_java_brave_sync_worker_(env, obj) {
   DLOG(ERROR) << "[BraveSync] " << __func__ << " CTOR 000";
 
-  //Java_BraveSyncWorker_setNativePtr
   Java_BraveSyncWorker_setNativePtr(env, obj,
     reinterpret_cast<intptr_t>(this));
   DLOG(ERROR) << "[BraveSync] " << __func__ << " CTOR done setNativePtr";
@@ -84,132 +56,6 @@ void BraveSyncWorker::Destroy(JNIEnv* env, const
   delete this;
 }
 
-
-
-// void CreateOpenDatabase() {
-//     if (!g_pLevel_db_init_mutex) {
-//         return;
-//     }
-//     std::lock_guard<std::mutex> guard(*g_pLevel_db_init_mutex);
-//
-//     if (nullptr == g_level_db) {
-//         base::FilePath app_data_path;
-//         base::PathService::Get(base::DIR_ANDROID_APP_DATA, &app_data_path);
-//         base::FilePath dbFilePath = app_data_path.Append(DB_FILE_NAME);
-//
-//         leveldb::Options options;
-//         options.create_if_missing = true;
-//         leveldb::Status status = leveldb::DB::Open(options,
-//             dbFilePath.value().c_str(), &g_level_db);
-//         if (!status.ok() || !g_level_db) {
-//             if (g_level_db) {
-//                 delete g_level_db;
-//                 g_level_db = nullptr;
-//             }
-//
-//             LOG(ERROR) << "sync level db open error " << DB_FILE_NAME;
-//
-//             return;
-//         }
-//     }
-// }
-
-base::android::ScopedJavaLocalRef<jstring>
-    JNI_BraveSyncWorker_GetLocalIdByObjectId(JNIEnv* env,
-        const base::android::JavaParamRef<jobject>& jcaller,
-        const base::android::JavaParamRef<jstring>& objectId) {
-    // CreateOpenDatabase();
-    // if (nullptr == g_level_db) {
-    //     return base::android::ConvertUTF8ToJavaString(env, "");
-    // }
-    //
-    // std::string value;
-    // g_level_db->Get(leveldb::ReadOptions(),
-    //     base::android::ConvertJavaStringToUTF8(objectId), &value);
-    //
-    // return base::android::ConvertUTF8ToJavaString(env, value);
-    return base::android::ConvertUTF8ToJavaString(env, "");
-}
-
-base::android::ScopedJavaLocalRef<jstring>
-    JNI_BraveSyncWorker_GetObjectIdByLocalId(JNIEnv* env,
-      const base::android::JavaParamRef<jobject>& obj,
-      const base::android::JavaParamRef<jstring>& localId) {
-    // CreateOpenDatabase();
-    // if (nullptr == g_level_db) {
-    //     return base::android::ConvertUTF8ToJavaString(env, "");
-    // }
-    //
-    // std::string value;
-    // g_level_db->Get(leveldb::ReadOptions(),
-    //     base::android::ConvertJavaStringToUTF8(localId), &value);
-    //
-    // return base::android::ConvertUTF8ToJavaString(env, value);
-    return base::android::ConvertUTF8ToJavaString(env, "");
-}
-
-void JNI_BraveSyncWorker_SaveObjectId(JNIEnv* env,
-      const base::android::JavaParamRef<jobject>& jcaller,
-      const base::android::JavaParamRef<jstring>& localId,
-      const base::android::JavaParamRef<jstring>& objectIdJSON,
-      const base::android::JavaParamRef<jstring>& objectId) {
-    // CreateOpenDatabase();
-    // if (nullptr == g_level_db) {
-    //     return;
-    // }
-    // std::string strLocalId = base::android::ConvertJavaStringToUTF8(localId);
-    //
-    // g_level_db->Put(leveldb::WriteOptions(), strLocalId,
-    //     base::android::ConvertJavaStringToUTF8(objectIdJSON));
-    // std::string strObjectId = base::android::ConvertJavaStringToUTF8(objectId);
-    // if (0 != strObjectId.size()) {
-    //     g_level_db->Put(leveldb::WriteOptions(), strObjectId, strLocalId);
-    // }
-}
-
-void JNI_BraveSyncWorker_DeleteByLocalId(JNIEnv* env,
-      const base::android::JavaParamRef<jobject>& obj,
-      const base::android::JavaParamRef<jstring>& localId) {
-    // CreateOpenDatabase();
-    // if (nullptr == g_level_db) {
-    //     return;
-    // }
-    //
-    // std::string strLocalId = base::android::ConvertJavaStringToUTF8(localId);
-    // std::string value;
-    // g_level_db->Get(leveldb::ReadOptions(), strLocalId, &value);
-    // std::string object_id = ExtractObjectIdFromJson(value);
-    // if (object_id.empty()) {
-    //   object_id = value;
-    // }
-    //
-    // g_level_db->Delete(leveldb::WriteOptions(), strLocalId);
-    // g_level_db->Delete(leveldb::WriteOptions(), object_id);
-}
-
-static void JNI_BraveSyncWorker_Clear(JNIEnv* env,
-        const base::android::JavaParamRef<jobject>& obj) {
-    // if (g_level_db) {
-    //     delete g_level_db;
-    //     g_level_db = nullptr;
-    // }
-    // if (g_pLevel_db_init_mutex) {
-    //     delete g_pLevel_db_init_mutex;
-    //     g_pLevel_db_init_mutex = nullptr;
-    // }
-}
-
-static void JNI_BraveSyncWorker_ResetSync(JNIEnv* env,
-      const base::android::JavaParamRef<jobject>& obj,
-      const base::android::JavaParamRef<jstring>& key) {
-    // CreateOpenDatabase();
-    // if (nullptr == g_level_db) {
-    //     return;
-    // }
-    // g_level_db->Delete(leveldb::WriteOptions(),
-    //     base::android::ConvertJavaStringToUTF8(key));
-}
-
 static void JNI_BraveSyncWorker_DestroyV1LevelDb(JNIEnv* env,
         const base::android::JavaParamRef<jobject>& obj) {
   base::FilePath app_data_path;
@@ -221,7 +67,6 @@ static void JNI_BraveSyncWorker_DestroyV1LevelDb(JNIEnv* env,
   DLOG(INFO) << "[BraveSync] " << __func__ << " destroy DB status is "<<status.ToString();
 }
 
-//static void JNI_BraveSyncWorker_nativeGetSyncCode
 base::android::ScopedJavaLocalRef<jstring> BraveSyncWorker::GetSyncCodeWords
       (JNIEnv* env,
       const base::android::JavaParamRef<jobject>& jcaller) {
@@ -248,7 +93,6 @@ DLOG(ERROR) << "[BraveSync] " << __func__ << " 000 str_passphrase="<<str_passphr
   std::vector<uint8_t> seed;
   if (!brave_sync::crypto::PassphraseToBytes32(str_passphrase, &seed)) {
     LOG(ERROR) << "invalid sync code:" << str_passphrase;
-    //
     return;
   }
 
@@ -257,7 +101,7 @@ DLOG(ERROR) << "[BraveSync] " << __func__ << " 000 str_passphrase="<<str_passphr
   brave_sync_prefs.SetSeed(str_passphrase);
 }
 
-// see PeopleHandler::GetSyncService()
+// See PeopleHandler::GetSyncService()
 syncer::SyncService* BraveSyncWorker::GetSyncService() const {
 DLOG(ERROR) << "[BraveSync] " << __func__ << " ProfileSyncServiceFactory::IsSyncAllowed(profile_)="<<ProfileSyncServiceFactory::IsSyncAllowed(profile_);
 if (ProfileSyncServiceFactory::IsSyncAllowed(profile_)) {
@@ -268,7 +112,7 @@ DLOG(ERROR) << "[BraveSync] " << __func__ << " ProfileSyncServiceFactory::GetFor
              : nullptr;
 }
 
-//PeopleHandler::HandleShowSetupUI
+// See PeopleHandler::HandleShowSetupUI
 void BraveSyncWorker::HandleShowSetupUI(JNIEnv* env,
   const base::android::JavaParamRef<jobject>& jcaller) {
 DLOG(ERROR) << "[BraveSync] " << __func__ << " 000";
@@ -290,7 +134,7 @@ DLOG(ERROR) << "[BraveSync] " << __func__ << " BRAVE_HANDLE_SHOW_SETUP_UI";
   // ?? PushSyncPrefs();
 }
 
-// PeopleHandler::MarkFirstSetupComplete
+// See PeopleHandler::MarkFirstSetupComplete
 void BraveSyncWorker::MarkFirstSetupComplete() {
 DLOG(ERROR) << "[BraveSync] " << __func__ << " 000";
   syncer::SyncService* service = GetSyncService();
@@ -349,13 +193,6 @@ DLOG(ERROR) << "[BraveSync] " << __func__ << " invoke brave_sync_prefs.Clear()";
   // Sync prefs will be clear in ProfileSyncService::StopImpl
 }
 
-
-// static void JNI_BraveSyncWorker_GetSyncCode2(
-//   JNIEnv* env,
-//   const base::android::JavaParamRef<jobject>& jcaller) {
-//   DLOG(ERROR) << "[BraveSync] " << __func__ << " 000";
-// }
-
 static void JNI_BraveSyncWorker_Init(
     JNIEnv* env,
     const base::android::JavaParamRef<jobject>& jcaller) {
@@ -384,9 +221,6 @@ DLOG(ERROR) << "[BraveSync] " << __func__ << " str_seed_words="<<str_seed_words;
 DLOG(ERROR) << "[BraveSync] " << __func__ << " sync_code_hex="<<sync_code_hex;
   return base::android::ConvertUTF8ToJavaString(env, sync_code_hex);
 }
-
-//private native boolean nativeIsCodephraseValid(String codepharse);
-
 
 }  // namespace android
 }  // namespace chrome
