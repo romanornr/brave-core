@@ -11,6 +11,64 @@ index 4a7c610cec562ed067a86629b8a6f5d0b8758ddf..e5b2f7a726b7efe4d3f5dfe2322a1d37
          implements PassphraseDialogFragment.Listener, PassphraseCreationDialogFragment.Listener,
                     PassphraseTypeDialogFragment.Listener, Preference.OnPreferenceChangeListener,
                     ProfileSyncService.SyncStateChangedListener {
+@@ -88,15 +88,15 @@ public class ManageSyncSettings extends PreferenceFragmentCompat
+     private final ProfileSyncService mProfileSyncService = ProfileSyncService.get();
+
+     private ChromeSwitchPreference mSyncEverything;
+-    private CheckBoxPreference mSyncAutofill;
+-    private CheckBoxPreference mSyncBookmarks;
+-    private CheckBoxPreference mSyncPaymentsIntegration;
+-    private CheckBoxPreference mSyncHistory;
+-    private CheckBoxPreference mSyncPasswords;
+-    private CheckBoxPreference mSyncRecentTabs;
+-    private CheckBoxPreference mSyncSettings;
++    private ChromeSwitchPreference mSyncAutofill;
++    private ChromeSwitchPreference mSyncBookmarks;
++    private ChromeSwitchPreference mSyncPaymentsIntegration;
++    private ChromeSwitchPreference mSyncHistory;
++    private ChromeSwitchPreference mSyncPasswords;
++    private ChromeSwitchPreference mSyncRecentTabs;
++    private ChromeSwitchPreference mSyncSettings;
+     // Contains preferences for all sync data types.
+-    private CheckBoxPreference[] mSyncTypePreferences;
++    private ChromeSwitchPreference[] mSyncTypePreferences;
+
+     private Preference mGoogleActivityControls;
+     private Preference mSyncEncryption;
+@@ -114,14 +114,14 @@ public class ManageSyncSettings extends PreferenceFragmentCompat
+         mSyncEverything = (ChromeSwitchPreference) findPreference(PREF_SYNC_EVERYTHING);
+         mSyncEverything.setOnPreferenceChangeListener(this);
+
+-        mSyncAutofill = (CheckBoxPreference) findPreference(PREF_SYNC_AUTOFILL);
+-        mSyncBookmarks = (CheckBoxPreference) findPreference(PREF_SYNC_BOOKMARKS);
++        mSyncAutofill = (ChromeSwitchPreference) findPreference(PREF_SYNC_AUTOFILL);
++        mSyncBookmarks = (ChromeSwitchPreference) findPreference(PREF_SYNC_BOOKMARKS);
+         mSyncPaymentsIntegration =
+-                (CheckBoxPreference) findPreference(PREF_SYNC_PAYMENTS_INTEGRATION);
+-        mSyncHistory = (CheckBoxPreference) findPreference(PREF_SYNC_HISTORY);
+-        mSyncPasswords = (CheckBoxPreference) findPreference(PREF_SYNC_PASSWORDS);
+-        mSyncRecentTabs = (CheckBoxPreference) findPreference(PREF_SYNC_RECENT_TABS);
+-        mSyncSettings = (CheckBoxPreference) findPreference(PREF_SYNC_SETTINGS);
++                (ChromeSwitchPreference) findPreference(PREF_SYNC_PAYMENTS_INTEGRATION);
++        mSyncHistory = (ChromeSwitchPreference) findPreference(PREF_SYNC_HISTORY);
++        mSyncPasswords = (ChromeSwitchPreference) findPreference(PREF_SYNC_PASSWORDS);
++        mSyncRecentTabs = (ChromeSwitchPreference) findPreference(PREF_SYNC_RECENT_TABS);
++        mSyncSettings = (ChromeSwitchPreference) findPreference(PREF_SYNC_SETTINGS);
+
+         mGoogleActivityControls = findPreference(PREF_GOOGLE_ACTIVITY_CONTROLS);
+         mSyncEncryption = findPreference(PREF_ENCRYPTION);
+@@ -132,9 +132,9 @@ public class ManageSyncSettings extends PreferenceFragmentCompat
+                 this, () -> SyncSettingsUtils.openSyncDashboard(getActivity())));
+
+         mSyncTypePreferences =
+-                new CheckBoxPreference[] {mSyncAutofill, mSyncBookmarks, mSyncPaymentsIntegration,
++                new ChromeSwitchPreference[] {mSyncAutofill, mSyncBookmarks, mSyncPaymentsIntegration,
+                         mSyncHistory, mSyncPasswords, mSyncRecentTabs, mSyncSettings};
+-        for (CheckBoxPreference type : mSyncTypePreferences) {
++        for (ChromeSwitchPreference type : mSyncTypePreferences) {
+             type.setOnPreferenceChangeListener(this);
+         }
+
 @@ -145,6 +145,11 @@ public class ManageSyncSettings extends PreferenceFragmentCompat
 
          // Prevent sync settings changes from taking effect until the user leaves this screen.
@@ -33,3 +91,12 @@ index 4a7c610cec562ed067a86629b8a6f5d0b8758ddf..e5b2f7a726b7efe4d3f5dfe2322a1d37
          if (signedInAccountName == null) {
              // May happen if account is removed from the device while this screen is shown.
              getActivity().finish();
+@@ -435,7 +441,7 @@ public class ManageSyncSettings extends PreferenceFragmentCompat
+         boolean syncEverything = mProfileSyncService.hasKeepEverythingSynced();
+         mSyncEverything.setChecked(syncEverything);
+         if (syncEverything) {
+-            for (CheckBoxPreference pref : mSyncTypePreferences) {
++            for (ChromeSwitchPreference pref : mSyncTypePreferences) {
+                 pref.setChecked(true);
+                 pref.setEnabled(false);
+             }
