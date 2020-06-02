@@ -1,17 +1,36 @@
 diff --git a/third_party/blink/renderer/core/html/media/autoplay_policy.cc b/third_party/blink/renderer/core/html/media/autoplay_policy.cc
-index 9e03caf66bbe9b7971de431e5bcb60abd8d1511a..26f21c9543db8e0d9ecc0e3b49e5bc9bd6521ea4 100644
+index 9e03caf66bbe9b7971de431e5bcb60abd8d1511a..9d89767f4bc2affcee21a8aaf8f128dff66b8a62 100644
 --- a/third_party/blink/renderer/core/html/media/autoplay_policy.cc
 +++ b/third_party/blink/renderer/core/html/media/autoplay_policy.cc
-@@ -308,10 +308,12 @@ bool AutoplayPolicy::IsGestureNeededForPlayback() const {
-   if (!IsLockedPendingUserGesture())
+@@ -74,6 +74,7 @@ AutoplayPolicy::Type AutoplayPolicy::GetAutoplayPolicyForDocument(
+   if (document.GetSettings()->GetPresentationReceiver())
+     return Type::kNoUserGestureRequired;
+ 
++  BRAVE_AUTOPLAY_POLICY_GET_FOR_DOCUMENT
+   return document.GetSettings()->GetAutoplayPolicy();
+ }
+ 
+@@ -244,6 +245,7 @@ bool AutoplayPolicy::RequestAutoplayByAttribute() {
+   if (IsGestureNeededForPlayback())
      return false;
  
-+  BRAVE_AUTOPLAY_POLICY_IS_GESTURE_NEEDED_FOR_PLAYBACK
-   // We want to allow muted video to autoplay if the element is allowed to
-   // autoplay muted.
-   return !IsEligibleForAutoplayMuted();
- }
-+BRAVE_AUTOPLAY_POLICY_IS_AUTOPLAY_ALLOWED_PER_SETTINGS
++  BRAVE_AUTOPLAY_POLICY_REQUEST_AUTOPLAY_BY_ATTRIBUTE
+   // If it's the first playback, track that it started because of autoplay.
+   MaybeSetAutoplayInitiated();
  
- String AutoplayPolicy::GetPlayErrorMessage() const {
-   return IsUsingDocumentUserActivationRequiredPolicy()
+@@ -262,12 +264,14 @@ base::Optional<DOMExceptionCode> AutoplayPolicy::RequestPlay() {
+   if (!LocalFrame::HasTransientUserActivation(
+           element_->GetDocument().GetFrame())) {
+     autoplay_uma_helper_->OnAutoplayInitiated(AutoplaySource::kMethod);
+-    if (IsGestureNeededForPlayback())
++    if (IsGestureNeededForPlayback()) {
+       return DOMExceptionCode::kNotAllowedError;
++    }
+   } else {
+     TryUnlockingUserGesture();
+   }
+ 
++  BRAVE_AUTOPLAY_POLICY_REQUEST_PLAY
+   MaybeSetAutoplayInitiated();
+ 
+   return base::nullopt;
