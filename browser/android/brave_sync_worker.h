@@ -7,24 +7,24 @@
 #define BRAVE_BROWSER_ANDROID_BRAVE_SYNC_WORKER_H_
 
 #include <jni.h>
+
 #include "base/android/jni_weak_ref.h"
+#include "base/scoped_observer.h"
+#include "components/sync/driver/sync_service.h"
+#include "components/sync/driver/sync_service_observer.h"
 
 class Profile;
-
-namespace syncer {
-  class SyncService;
-}
 
 namespace chrome {
 namespace android {
 
-class BraveSyncWorker {
+class BraveSyncWorker : public syncer::SyncServiceObserver {
  public:
   BraveSyncWorker(JNIEnv* env,
     //jobject obj
     const base::android::JavaRef<jobject>& obj
   );
-  ~BraveSyncWorker();
+  ~BraveSyncWorker() override;
 
   void Destroy(JNIEnv* env,
       const base::android::JavaParamRef<jobject>& jcaller);
@@ -52,8 +52,16 @@ class BraveSyncWorker {
   syncer::SyncService* GetSyncService() const;
   void MarkFirstSetupComplete();
 
+  // syncer::SyncServiceObserver implementation.
+  void OnStateChanged(syncer::SyncService* sync) override;
+
   JavaObjectWeakGlobalRef weak_java_brave_sync_worker_;
   Profile* profile_ = nullptr;
+
+  std::string passphrase_;
+
+  ScopedObserver<syncer::SyncService, syncer::SyncServiceObserver>
+      sync_service_observer_{this};
 };
 
 }  // namespace android

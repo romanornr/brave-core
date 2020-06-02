@@ -72,7 +72,7 @@ base::android::ScopedJavaLocalRef<jstring> BraveSyncWorker::GetSyncCodeWords
       const base::android::JavaParamRef<jobject>& jcaller) {
 DLOG(ERROR) << "[BraveSync] " << __func__ << " 000 profile_="<<profile_;
 
-  brave_sync::prefs::Prefs brave_sync_prefs(profile_->GetPrefs());
+  brave_sync::Prefs brave_sync_prefs(profile_->GetPrefs());
   std::string sync_code = brave_sync_prefs.GetSeed();
 DLOG(ERROR) << "[BraveSync] " << __func__ << " sync_code=" << sync_code;
   if (sync_code.empty()) {
@@ -96,7 +96,9 @@ DLOG(ERROR) << "[BraveSync] " << __func__ << " 000 str_passphrase="<<str_passphr
     return;
   }
 
-  brave_sync::prefs::Prefs brave_sync_prefs(profile_->GetPrefs());
+  passphrase_ = str_passphrase;
+
+  brave_sync::Prefs brave_sync_prefs(profile_->GetPrefs());
 
   brave_sync_prefs.SetSeed(str_passphrase);
 }
@@ -115,23 +117,21 @@ DLOG(ERROR) << "[BraveSync] " << __func__ << " ProfileSyncServiceFactory::GetFor
 // See PeopleHandler::HandleShowSetupUI
 void BraveSyncWorker::HandleShowSetupUI(JNIEnv* env,
   const base::android::JavaParamRef<jobject>& jcaller) {
-DLOG(ERROR) << "[BraveSync] " << __func__ << " 000";
-  syncer::SyncService* service = GetSyncService();
-DLOG(ERROR) << "[BraveSync] " << __func__ << " service=" << service;
-  // BRAVE_HANDLE_SHOW_SETUP_UI {
-DLOG(ERROR) << "[BraveSync] " << __func__ << " BRAVE_HANDLE_SHOW_SETUP_UI";
-  brave_sync::prefs::Prefs brave_sync_prefs(profile_->GetPrefs());
-  if (!brave_sync_prefs.IsSyncV2Migrated()) {
-    service->StopAndClear();
-    brave_sync_prefs.SetSyncV2Migrated(true);
+
+  syncer::SyncService* service =
+        ProfileSyncServiceFactory::GetForProfile(profile_);
+
+  if (service && !sync_service_observer_.IsObserving(service)) {
+    sync_service_observer_.Add(service);
   }
-  brave_sync_prefs.SetSyncEnabled(true);
-  // } BRAVE_HANDLE_SHOW_SETUP_UI
 
-  if (service)
+  // Mark Sync as requested by the user. It might already be requested, but
+  // it's not if this is either the first time the user is setting up Sync, or
+  // Sync was set up but then was reset via the dashboard. This also pokes the
+  // SyncService to start up immediately, i.e. bypass deferred startup.
+  if (service) {
     service->GetUserSettings()->SetSyncRequested(true);
-
-  // ?? PushSyncPrefs();
+  }
 }
 
 // See PeopleHandler::MarkFirstSetupComplete
@@ -186,11 +186,146 @@ DLOG(ERROR) << "[BraveSync] " << __func__ << " sync_service=" << sync_service;
     sync_service->GetUserSettings()->SetSyncRequested(false);
     sync_service->StopAndClear();
   }
-  brave_sync::prefs::Prefs brave_sync_prefs(profile_->GetPrefs());
+  brave_sync::Prefs brave_sync_prefs(profile_->GetPrefs());
 DLOG(ERROR) << "[BraveSync] " << __func__ << " invoke brave_sync_prefs.Clear()";
   brave_sync_prefs.Clear();
 
   // Sync prefs will be clear in ProfileSyncService::StopImpl
+}
+
+namespace {
+
+// A structure which contains all the configuration information for sync.
+struct SyncConfigInfo {
+  SyncConfigInfo();
+  ~SyncConfigInfo();
+
+  bool encrypt_all;
+  std::string passphrase;
+  bool set_new_passphrase;
+};
+
+SyncConfigInfo::SyncConfigInfo()
+    : encrypt_all(false),
+      set_new_passphrase(false) {}
+
+SyncConfigInfo::~SyncConfigInfo() {}
+
+}
+
+void BraveSyncWorker::OnStateChanged(syncer::SyncService* sync) {
+  SyncConfigInfo configuration;
+
+  // Inspired by PeopleHandler::HandleSetEncryption
+  // Start configuring the SyncService using the configuration passed to us from
+  // the JS layer.
+  syncer::SyncService* service = GetSyncService();
+
+  // If the sync engine has shutdown for some reason, just close the sync
+  // dialog.
+  if (!service || !service->IsEngineInitialized()) {
+    // CloseSyncSetup();
+    // ResolveJavascriptCallback(*callback_id, base::Value(kDonePageStatus));
+    return;
+  }
+
+  // syncStatus.firstSetupInProgress
+  // BRAVE_GET_SYNC_STATUS_DICTIONARY:
+  bool firstSetupInProgress = service &&
+          !service->GetUserSettings()->IsFirstSetupComplete();
+
+  // this.syncPrefs.encryptAllData
+  // PeopleHandler::PushSyncPrefs
+  // sync_user_settings->IsEncryptEverythingEnabled()
+  configuration.encrypt_all =
+      service->GetUserSettings()->IsEncryptEverythingEnabled();
+
+  // this.syncPrefs.passphraseRequired
+  // PeopleHandler::PushSyncPrefs
+  // sync_user_settings->IsPassphraseRequired()
+  bool syncPrefs_passphraseRequired =
+      service->GetUserSettings()->IsPassphraseRequired();
+
+  // Inspired by brave_sync_subpage.js:handleSyncPrefsChanged_
+  if (!firstSetupInProgress) {
+    if (!configuration.encrypt_all) {
+      configuration.encrypt_all = true;
+      configuration.set_new_passphrase = true;
+      DCHECK_NE(this->passphrase_.size(), 0u);
+      configuration.passphrase = this->passphrase_;
+    } else if (syncPrefs_passphraseRequired) {
+      configuration.set_new_passphrase = false;
+      DCHECK_NE(this->passphrase_.size(), 0u);
+      configuration.passphrase = this->passphrase_;
+    } else {
+      return;
+    }
+  }
+
+  // Don't allow "encrypt all" if the SyncService doesn't allow it.
+  // The UI is hidden, but the user may have enabled it e.g. by fiddling with
+  // the web inspector.
+  if (!service->GetUserSettings()->IsEncryptEverythingAllowed()) {
+    configuration.encrypt_all = false;
+    configuration.set_new_passphrase = false;
+  }
+
+  // Note: Data encryption will not occur until configuration is complete
+  // (when the PSS receives its CONFIGURE_DONE notification from the sync
+  // engine), so the user still has a chance to cancel out of the operation
+  // if (for example) some kind of passphrase error is encountered.
+  if (configuration.encrypt_all)
+    service->GetUserSettings()->EnableEncryptEverything();
+
+  bool passphrase_failed = false;
+  if (!configuration.passphrase.empty()) {
+    // We call IsPassphraseRequired() here (instead of
+    // IsPassphraseRequiredForPreferredDataTypes()) because the user may try to
+    // enter a passphrase even though no encrypted data types are enabled.
+    if (service->GetUserSettings()->IsPassphraseRequired()) {
+      // If we have pending keys, try to decrypt them with the provided
+      // passphrase. We track if this succeeds or fails because a failed
+      // decryption should result in an error even if there aren't any encrypted
+      // data types.
+      passphrase_failed = !service->GetUserSettings()->SetDecryptionPassphrase(
+          configuration.passphrase);
+    } else if (service->GetUserSettings()->IsTrustedVaultKeyRequired()) {
+      // There are pending keys due to trusted vault keys being required, likely
+      // because something changed since the UI was displayed. A passphrase
+      // cannot be set in such circumstances.
+      passphrase_failed = true;
+    } else {
+      // OK, the user sent us a passphrase, but we don't have pending keys. So
+      // it either means that the pending keys were resolved somehow since the
+      // time the UI was displayed (re-encryption, pending passphrase change,
+      // etc) or the user wants to re-encrypt.
+      if (configuration.set_new_passphrase &&
+          !service->GetUserSettings()->IsUsingSecondaryPassphrase()) {
+        service->GetUserSettings()->SetEncryptionPassphrase(
+            configuration.passphrase);
+      }
+    }
+  }
+
+  if (passphrase_failed ||
+      service->GetUserSettings()->IsPassphraseRequiredForPreferredDataTypes()) {
+    // If the user doesn't enter any passphrase, we won't call
+    // SetDecryptionPassphrase() (passphrase_failed == false), but we still
+    // want to display an error message to let the user know that their blank
+    // passphrase entry is not acceptable.
+
+    // TODO(tommycli): Switch this to RejectJavascriptCallback once the
+    // Sync page JavaScript has been further refactored.
+//    ResolveJavascriptCallback(*callback_id,
+//                              base::Value(kPassphraseFailedPageStatus));
+  } else {
+//    ResolveJavascriptCallback(*callback_id, base::Value(kConfigurePageStatus));
+  }
+
+  if (configuration.encrypt_all)
+    ProfileMetrics::LogProfileSyncInfo(ProfileMetrics::SYNC_ENCRYPT);
+  if (!configuration.set_new_passphrase && !configuration.passphrase.empty())
+    ProfileMetrics::LogProfileSyncInfo(ProfileMetrics::SYNC_PASSPHRASE);
 }
 
 static void JNI_BraveSyncWorker_Init(
