@@ -1,8 +1,8 @@
 diff --git a/base/android/java/src/org/chromium/base/CommandLine.java b/base/android/java/src/org/chromium/base/CommandLine.java
-index 7a8dfd6b001e98660134d4480d5d42e96b9fac30..43c706b6760fb9bfdc4697a3475bb1650dfce848 100644
+index 646a4f6dd560c44237f0e661c21e28df3f559777..c792e2d843810d739d35641b0b7cec1ff823e5eb 100644
 --- a/base/android/java/src/org/chromium/base/CommandLine.java
 +++ b/base/android/java/src/org/chromium/base/CommandLine.java
-@@ -142,7 +142,11 @@ public abstract class CommandLine {
+@@ -148,7 +148,11 @@ public abstract class CommandLine {
       * @param file The fully qualified command line file.
       */
      public static void initFromFile(String file) {

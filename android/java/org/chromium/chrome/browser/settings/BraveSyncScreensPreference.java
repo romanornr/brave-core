@@ -83,7 +83,7 @@ import org.chromium.chrome.browser.qrreader.CameraSourcePreview;
 import org.chromium.chrome.browser.settings.BravePreferenceFragment;
 import org.chromium.chrome.browser.settings.SettingsActivity;
 import org.chromium.chrome.browser.settings.SettingsLauncher;
-import org.chromium.chrome.browser.settings.sync.ManageSyncSettings;
+import org.chromium.chrome.browser.sync.settings.ManageSyncSettings;
 import org.chromium.chrome.browser.sync.BraveSyncService;
 import org.chromium.ui.KeyboardVisibilityDelegate;
 import org.chromium.ui.base.DeviceFormFactor;

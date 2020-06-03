@@ -1,19 +1,10 @@
 diff --git a/chrome/android/java/src/org/chromium/chrome/browser/sync/settings/ManageSyncSettings.java b/chrome/android/java/src/org/chromium/chrome/browser/sync/settings/ManageSyncSettings.java
-index 4a7c610cec562ed067a86629b8a6f5d0b8758ddf..e5b2f7a726b7efe4d3f5dfe2322a1d375e49f631 100644
+index 4a7c610cec562ed067a86629b8a6f5d0b8758ddf..12365d1cfdc23943dd6e0e3e224dccd2c107b178 100644
 --- a/chrome/android/java/src/org/chromium/chrome/browser/sync/settings/ManageSyncSettings.java
 +++ b/chrome/android/java/src/org/chromium/chrome/browser/sync/settings/ManageSyncSettings.java
-@@ -64,7 +64,7 @@ import java.util.Set;
-  * Settings fragment to customize Sync options (data types, encryption). Can be accessed from
-  * {@link SyncAndServicesSettings}.
-  */
--public class ManageSyncSettings extends PreferenceFragmentCompat
-+public class ManageSyncSettings extends org.chromium.chrome.browser.settings.BravePreferenceFragment
-         implements PassphraseDialogFragment.Listener, PassphraseCreationDialogFragment.Listener,
-                    PassphraseTypeDialogFragment.Listener, Preference.OnPreferenceChangeListener,
-                    ProfileSyncService.SyncStateChangedListener {
-@@ -88,15 +88,15 @@ public class ManageSyncSettings extends PreferenceFragmentCompat
-     private final ProfileSyncService mProfileSyncService = ProfileSyncService.get();
-
+@@ -116,15 +116,15 @@ public class ManageSyncSettings extends PreferenceFragmentCompat
+     private PreferenceCategory mSyncingCategory;
+ 
      private ChromeSwitchPreference mSyncEverything;
 -    private CheckBoxPreference mSyncAutofill;
 -    private CheckBoxPreference mSyncBookmarks;
@@ -32,13 +23,13 @@ index 4a7c610cec562ed067a86629b8a6f5d0b8758ddf..e5b2f7a726b7efe4d3f5dfe2322a1d37
      // Contains preferences for all sync data types.
 -    private CheckBoxPreference[] mSyncTypePreferences;
 +    private ChromeSwitchPreference[] mSyncTypePreferences;
-
+ 
      private Preference mGoogleActivityControls;
      private Preference mSyncEncryption;
-@@ -114,14 +114,14 @@ public class ManageSyncSettings extends PreferenceFragmentCompat
+@@ -161,14 +161,14 @@ public class ManageSyncSettings extends PreferenceFragmentCompat
          mSyncEverything = (ChromeSwitchPreference) findPreference(PREF_SYNC_EVERYTHING);
          mSyncEverything.setOnPreferenceChangeListener(this);
-
+ 
 -        mSyncAutofill = (CheckBoxPreference) findPreference(PREF_SYNC_AUTOFILL);
 -        mSyncBookmarks = (CheckBoxPreference) findPreference(PREF_SYNC_BOOKMARKS);
 +        mSyncAutofill = (ChromeSwitchPreference) findPreference(PREF_SYNC_AUTOFILL);
@@ -54,12 +45,12 @@ index 4a7c610cec562ed067a86629b8a6f5d0b8758ddf..e5b2f7a726b7efe4d3f5dfe2322a1d37
 +        mSyncPasswords = (ChromeSwitchPreference) findPreference(PREF_SYNC_PASSWORDS);
 +        mSyncRecentTabs = (ChromeSwitchPreference) findPreference(PREF_SYNC_RECENT_TABS);
 +        mSyncSettings = (ChromeSwitchPreference) findPreference(PREF_SYNC_SETTINGS);
-
+ 
          mGoogleActivityControls = findPreference(PREF_GOOGLE_ACTIVITY_CONTROLS);
          mSyncEncryption = findPreference(PREF_ENCRYPTION);
-@@ -132,9 +132,9 @@ public class ManageSyncSettings extends PreferenceFragmentCompat
+@@ -179,9 +179,9 @@ public class ManageSyncSettings extends PreferenceFragmentCompat
                  this, () -> SyncSettingsUtils.openSyncDashboard(getActivity())));
-
+ 
          mSyncTypePreferences =
 -                new CheckBoxPreference[] {mSyncAutofill, mSyncBookmarks, mSyncPaymentsIntegration,
 +                new ChromeSwitchPreference[] {mSyncAutofill, mSyncBookmarks, mSyncPaymentsIntegration,
@@ -68,30 +59,31 @@ index 4a7c610cec562ed067a86629b8a6f5d0b8758ddf..e5b2f7a726b7efe4d3f5dfe2322a1d37
 +        for (ChromeSwitchPreference type : mSyncTypePreferences) {
              type.setOnPreferenceChangeListener(this);
          }
-
-@@ -145,6 +145,11 @@ public class ManageSyncSettings extends PreferenceFragmentCompat
-
-         // Prevent sync settings changes from taking effect until the user leaves this screen.
-         mSyncSetupInProgressHandle = mProfileSyncService.getSetupInProgressHandle();
+ 
+@@ -208,6 +208,11 @@ public class ManageSyncSettings extends PreferenceFragmentCompat
+         mUrlKeyedAnonymizedData.setManagedPreferenceDelegate((
+                 ChromeManagedPreferenceDelegate) (preference
+                 -> UnifiedConsentServiceBridge.isUrlKeyedAnonymizedDataCollectionManaged()));
 +
 +        // TODO(alexey): subclass and pull out to avoid patch
 +        getPreferenceScreen().removePreference(mGoogleActivityControls);
 +        getPreferenceScreen().removePreference(mSyncEncryption);
 +        getPreferenceScreen().removePreference(mManageSyncData);
      }
-
+ 
      @Override
-@@ -218,7 +223,8 @@ public class ManageSyncSettings extends PreferenceFragmentCompat
+@@ -307,8 +312,8 @@ public class ManageSyncSettings extends PreferenceFragmentCompat
+      * from this state.
+      */
      private void updateSyncPreferences() {
-         // TODO(crbug.com/1041815): Migrate away from ChromeSigninController and use IdentityManager
-         // instead.
--        String signedInAccountName = ChromeSigninController.get().getSignedInAccountName();
+-        String signedInAccountName = CoreAccountInfo.getEmailFrom(
+-                IdentityServicesProvider.get().getIdentityManager().getPrimaryAccountInfo());
 +        // TODO(alexey): subclass ChromeSigninController and override getSignedInAccountName to avoid patch: String signedInAccountName = ChromeSigninController.get().getSignedInAccountName();
 +        String signedInAccountName = "BRAVE-STUB-ACCOUNT-NAME";
          if (signedInAccountName == null) {
              // May happen if account is removed from the device while this screen is shown.
              getActivity().finish();
-@@ -435,7 +441,7 @@ public class ManageSyncSettings extends PreferenceFragmentCompat
+@@ -525,7 +530,7 @@ public class ManageSyncSettings extends PreferenceFragmentCompat
          boolean syncEverything = mProfileSyncService.hasKeepEverythingSynced();
          mSyncEverything.setChecked(syncEverything);
          if (syncEverything) {
