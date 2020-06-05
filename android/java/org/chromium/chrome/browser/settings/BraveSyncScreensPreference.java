@@ -33,6 +33,7 @@ import android.text.style.RelativeSizeSpan;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
@@ -429,6 +430,7 @@ Log.e(TAG, "onCodeWordsReceived words=" + words);
                   @Override
                   public void onDevicesAvailable() {
                       try {
+Log.e(TAG, "onDevicesAvailable 000");
                           if (null == getActivity()) {
                               return;
                           }
@@ -439,6 +441,63 @@ Log.e(TAG, "onCodeWordsReceived words=" + words);
                                       Log.w(TAG, "No need to load devices for other pages");
                                       return;
                                   }
+                                  BraveActivity mainActivity = BraveRewardsHelper.getBraveActivity();
+                                  // if (null != mainActivity && null != mainActivity.mBraveSyncWorker) {
+                                  ArrayList<BraveSyncWorker.SyncDeviceInfo> deviceInfos = mainActivity.mBraveSyncWorker.GetSyncDeviceList();
+Log.e(TAG, "[BraveSync] onDevicesAvailable deviceInfos.size()="+deviceInfos.size());
+                                  ViewGroup insertPoint = (ViewGroup) getView().findViewById(R.id.brave_sync_devices);
+                                  insertPoint.removeAllViews();
+                                  int index = 0;
+                                  for (BraveSyncWorker.SyncDeviceInfo device : deviceInfos) {
+                                      View separator = (View) mInflater.inflate(R.layout.menu_separator, null);
+                                      View listItemView = (View) mInflater.inflate(R.layout.brave_sync_device, null);
+                                      if (null != listItemView && null != separator && null != insertPoint) {
+                                          TextView textView = (TextView) listItemView.findViewById(R.id.brave_sync_device_text);
+                                          if (null != textView) {
+                                              textView.setText(device.mName);
+Log.e(TAG, "[BraveSync] onDevicesAvailable device.mName="+device.mName);
+                                          }
+                                          // TODO(alexey): remove R.id.brave_sync_remove_device from xml, because we cannot remove other devices with sync v2
+                                          AppCompatImageView deleteButton = (AppCompatImageView) listItemView.findViewById(R.id.brave_sync_remove_device);
+                                          if (null != deleteButton) {
+                                              deleteButton.setVisibility(View.GONE);
+                                          }
+
+                                          //if (currentDeviceId.equals(device.mDeviceId)) {
+                                          if (device.mIsCurrentDevice) {
+                                               // Current device is deleted by button on the bottom
+                                               //deleteButton.setVisibility(View.GONE);
+                                               if (null != textView) {
+                                                   // Highlight curret device
+                                                   textView.setTextColor(ApiCompatibilityUtils.getColor(getActivity().getResources(), R.color.brave_theme_color));
+                                                   String currentDevice = device.mName + " " + getResources().getString(R.string.brave_sync_this_device_text);
+                                                   textView.setText(currentDevice);
+                                              }
+                                              // if (null != mRemoveDeviceButton) {
+                                              //     mRemoveDeviceButton.setTag(device);
+                                              //     mRemoveDeviceButton.setVisibility(View.VISIBLE);
+                                              //     mRemoveDeviceButton.setEnabled(true);
+                                              // }
+                                          } else {
+                                              // deleteButton.setTag(device);
+                                              // deleteButton.setOnClickListener(v -> {
+                                              //     BraveSyncWorker.ResolvedRecordToApply deviceToDelete = (BraveSyncWorker.ResolvedRecordToApply) v.getTag();
+                                              //     deleteDeviceDialog(deviceToDelete.mDeviceName, deviceToDelete.mDeviceId, deviceToDelete.mObjectId, v);
+                                              // });
+                                          }
+                                          insertPoint.addView(separator, index++);
+                                          insertPoint.addView(listItemView, index++);
+                                      }
+                                  }
+
+                                  if (index > 0) {
+                                      mBraveSyncTextDevicesTitle.setText(getResources().getString(R.string.brave_sync_devices_title));
+                                      View separator = (View) mInflater.inflate(R.layout.menu_separator, null);
+                                      if (null != insertPoint && null != separator) {
+                                          insertPoint.addView(separator, index++);
+                                      }
+                                  }
+
                                   // SharedPreferences sharedPref = getActivity().getApplicationContext().getSharedPreferences(BraveSyncWorker.PREF_NAME, 0);
                                   // String currentDeviceId = sharedPref.getString(BraveSyncWorker.PREF_DEVICE_ID, "");
                                   // Load other devices in chain

@@ -9,20 +9,24 @@
 
 #include "base/android/jni_android.h"
 #include "base/android/jni_string.h"
+#include "base/json/json_writer.h"
+#include "base/path_service.h"
 #include "base/strings/string_number_conversions.h"
 
-#include "base/path_service.h"
 #include "brave/build/android/jni_headers/BraveSyncWorker_jni.h"
 #include "brave/components/brave_sync/brave_sync_prefs.h"
 #include "brave/components/brave_sync/crypto/crypto.h"
 
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/profiles/profile_manager.h"
+#include "chrome/browser/sync/device_info_sync_service_factory.h"
 #include "chrome/browser/sync/profile_sync_service_factory.h"
 
 #include "components/sync/driver/sync_service.h"
 #include "components/sync/driver/sync_user_settings.h"
-
+#include "components/sync_device_info/device_info_sync_service.h"
+#include "components/sync_device_info/device_info_tracker.h"
+#include "components/sync_device_info/local_device_info_provider.h"
 #include "components/unified_consent/unified_consent_metrics.h"
 
 #include "third_party/leveldatabase/src/include/leveldb/db.h"
@@ -125,6 +129,14 @@ void BraveSyncWorker::HandleShowSetupUI(JNIEnv* env,
     sync_service_observer_.Add(service);
   }
 
+  syncer::DeviceInfoTracker* tracker =
+    DeviceInfoSyncServiceFactory::GetForProfile(profile_)
+       ->GetDeviceInfoTracker();
+  DCHECK(tracker);
+  if (tracker) {
+    device_info_tracker_observer_.Add(tracker);
+  }
+
   // Mark Sync as requested by the user. It might already be requested, but
   // it's not if this is either the first time the user is setting up Sync, or
   // Sync was set up but then was reset via the dashboard. This also pokes the
@@ -132,6 +144,14 @@ void BraveSyncWorker::HandleShowSetupUI(JNIEnv* env,
   if (service) {
     service->GetUserSettings()->SetSyncRequested(true);
   }
+
+  /* TODO: look on
+  void ProfileSyncServiceAndroid::RequestStart(JNIEnv* env,
+                                               const JavaParamRef<jobject>&) {
+    DCHECK_CURRENTLY_ON(BrowserThread::UI);
+    sync_service_->GetUserSettings()->SetSyncRequested(true);
+  }
+  */
 }
 
 // See PeopleHandler::MarkFirstSetupComplete
@@ -169,6 +189,14 @@ DLOG(ERROR) << "[BraveSync] " << __func__ << " 000";
 
 bool BraveSyncWorker::IsFirstSetupComplete(JNIEnv* env,
   const base::android::JavaParamRef<jobject>& jcaller) {
+/* TODO: look on
+jboolean ProfileSyncServiceAndroid::IsFirstSetupComplete(
+    JNIEnv* env,
+    const JavaParamRef<jobject>& obj) {
+  DCHECK_CURRENTLY_ON(BrowserThread::UI);
+  return sync_service_->GetUserSettings()->IsFirstSetupComplete();
+}
+*/
   syncer::SyncService* sync_service = GetSyncService();
   DLOG(ERROR) << "[BraveSync] " << __func__ << " will ret " <<
       (sync_service && sync_service->GetUserSettings()->IsFirstSetupComplete());
@@ -183,6 +211,13 @@ DLOG(ERROR) << "[BraveSync] " << __func__ << " 000";
   syncer::SyncService* sync_service = GetSyncService();
 DLOG(ERROR) << "[BraveSync] " << __func__ << " sync_service=" << sync_service;
   if (sync_service) {
+/* TODO: look on
+void ProfileSyncServiceAndroid::RequestStop(JNIEnv* env,
+                                            const JavaParamRef<jobject>&) {
+  DCHECK_CURRENTLY_ON(BrowserThread::UI);
+  sync_service_->GetUserSettings()->SetSyncRequested(false);
+}
+*/
     sync_service->GetUserSettings()->SetSyncRequested(false);
     sync_service->StopAndClear();
   }
@@ -327,6 +362,52 @@ void BraveSyncWorker::OnStateChanged(syncer::SyncService* sync) {
   if (!configuration.set_new_passphrase && !configuration.passphrase.empty())
     ProfileMetrics::LogProfileSyncInfo(ProfileMetrics::SYNC_PASSPHRASE);
 }
+
+void BraveSyncWorker::OnDeviceInfoChange() {
+  DLOG(ERROR) << "[BraveSync] " << __func__ << " 000";
+  // Notify UI page
+  JNIEnv* env = base::android::AttachCurrentThread();
+  Java_BraveSyncWorker_OnDeviceInfoChangeJava(env,
+      weak_java_brave_sync_worker_.get(env));
+}
+
+base::Value BraveSyncWorker::GetSyncDeviceList() {
+DLOG(ERROR) << "[BraveSync] " << __func__ << " 000";
+  auto* device_info_service =
+      DeviceInfoSyncServiceFactory::GetForProfile(profile_);
+  syncer::DeviceInfoTracker* tracker =
+      device_info_service->GetDeviceInfoTracker();
+  DCHECK(tracker);
+  const syncer::DeviceInfo* local_device_info = device_info_service
+     ->GetLocalDeviceInfoProvider()->GetLocalDeviceInfo();
+
+  base::Value device_list(base::Value::Type::LIST);
+
+  for (const auto& device : tracker->GetAllDeviceInfo()) {
+    auto device_value = base::Value::FromUniquePtrValue(device->ToValue());
+    bool is_current_device = local_device_info
+        ? local_device_info->guid() == device->guid()
+        : false;
+    device_value.SetBoolKey("isCurrentDevice", is_current_device);
+    device_list.Append(std::move(device_value));
+  }
+DLOG(ERROR) << "[BraveSync] " << __func__ << " device_list=" <<device_list;
+  return device_list;
+}
+
+base::android::ScopedJavaLocalRef<jstring>
+    BraveSyncWorker::GetSyncDeviceListJson(JNIEnv* env,
+    const base::android::JavaParamRef<jobject>& jcaller) {
+  base::Value device_list = GetSyncDeviceList();
+  std::string json_string;
+  if (!base::JSONWriter::Write(device_list, &json_string)) {
+    DVLOG(1) << "Writing as JSON failed. Passing empty string to Java code.";
+    json_string = std::string();
+  }
+DLOG(ERROR) << "[BraveSync] " << __func__ << " json_string=" << json_string;
+  return base::android::ConvertUTF8ToJavaString(env, json_string);
+}
+
 
 static void JNI_BraveSyncWorker_Init(
     JNIEnv* env,
