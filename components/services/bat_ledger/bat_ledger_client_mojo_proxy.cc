@@ -133,23 +133,6 @@ void BatLedgerClientMojoProxy::LoadPublisherState(
         AsWeakPtr(), std::move(callback)));
 }
 
-void BatLedgerClientMojoProxy::SetTimer(uint64_t time_offset,
-    uint32_t* timer_id) {
-  if (!Connected()) {
-    return;
-  }
-
-  bat_ledger_client_->SetTimer(time_offset, timer_id);  // sync
-}
-
-void BatLedgerClientMojoProxy::KillTimer(const uint32_t timer_id) {
-  if (!Connected()) {
-    return;
-  }
-
-  bat_ledger_client_->KillTimer(timer_id);  // sync
-}
-
 void BatLedgerClientMojoProxy::OnPanelPublisherInfo(
     ledger::Result result,
     ledger::PublisherInfoPtr info,

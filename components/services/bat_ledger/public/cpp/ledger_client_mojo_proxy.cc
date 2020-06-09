@@ -71,17 +71,6 @@ void LedgerClientMojoProxy::OnReconcileComplete(
       std::move(contribution));
 }
 
-void LedgerClientMojoProxy::SetTimer(uint64_t time_offset,
-    SetTimerCallback callback) {
-  uint32_t timer_id;
-  ledger_client_->SetTimer(time_offset, &timer_id);
-  std::move(callback).Run(timer_id);
-}
-
-void LedgerClientMojoProxy::KillTimer(const uint32_t timer_id) {
-  ledger_client_->KillTimer(timer_id);
-}
-
 void LedgerClientMojoProxy::OnPanelPublisherInfo(
     const ledger::Result result,
     ledger::PublisherInfoPtr publisher_info,

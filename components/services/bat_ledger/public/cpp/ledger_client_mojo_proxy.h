@@ -37,8 +37,6 @@ class LedgerClientMojoProxy : public mojom::BatLedgerClient,
 
   void LoadNicewareList(LoadNicewareListCallback callback) override;
 
-  void SetTimer(uint64_t time_offset, SetTimerCallback callback) override;
-  void KillTimer(const uint32_t timer_id) override;
   void OnPanelPublisherInfo(
       const ledger::Result result,
       ledger::PublisherInfoPtr info,
