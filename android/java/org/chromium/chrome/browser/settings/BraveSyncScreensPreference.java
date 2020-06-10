@@ -606,6 +606,7 @@ Log.e(TAG, "[BraveSync] onDevicesAvailable device.mName="+device.mName);
           //mainActivity.mBraveSyncWorker.InitV2(mSyncScreensObserver);
           mainActivity.mBraveSyncWorker.InitScreensObserver(mSyncScreensObserver);
 
+          // TODO, AB: need to split sync state observer and devices observer
           mainActivity.mBraveSyncWorker.HandleShowSetupUI();
       }
       // TODO(sergz): Uncomment sync service impl when we fully migrate on sync v2

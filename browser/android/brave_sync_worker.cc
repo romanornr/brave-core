@@ -121,7 +121,7 @@ DLOG(ERROR) << "[BraveSync] " << __func__ << " ProfileSyncServiceFactory::GetFor
 // See PeopleHandler::HandleShowSetupUI
 void BraveSyncWorker::HandleShowSetupUI(JNIEnv* env,
   const base::android::JavaParamRef<jobject>& jcaller) {
-
+DLOG(ERROR) << "[BraveSync] " << __func__ << " 000";
   syncer::SyncService* service =
         ProfileSyncServiceFactory::GetForProfile(profile_);
 
@@ -133,9 +133,12 @@ void BraveSyncWorker::HandleShowSetupUI(JNIEnv* env,
     DeviceInfoSyncServiceFactory::GetForProfile(profile_)
        ->GetDeviceInfoTracker();
   DCHECK(tracker);
-  if (tracker) {
+  if (tracker && !device_info_tracker_observer_.IsObserving(tracker) ) {
     device_info_tracker_observer_.Add(tracker);
   }
+
+  // TODO, AB: call SetSyncRequested(true) and sync_service_observer_ must be set and only if sync is not enabled
+  // The point when it is invoked when sync is enabled is above on the stack
 
   // Mark Sync as requested by the user. It might already be requested, but
   // it's not if this is either the first time the user is setting up Sync, or
