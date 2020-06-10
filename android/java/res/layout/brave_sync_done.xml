@@ -19,16 +19,6 @@
         android:paddingTop="2dip"
         android:paddingEnd="2dip" >
 
-        <Button android:id="@+id/brave_sync_btn_show_categories"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Categories to sync"
-            style="@style/BraveSyncBottomButton"
-            android:background="@android:color/transparent"
-            android:textColor="@color/google_red_600" />
-            <!-- android:text="@string/brave_sync_remove_device_text" -->
-
-
         <TextView android:id="@+id/brave_sync_settings_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -204,6 +194,12 @@
             android:layout_height="wrap_content"
             android:text="@string/cancel"
             android:visibility="gone"
+            style="@style/BraveSyncButton" />
+
+        <Button android:id="@+id/brave_sync_btn_show_categories"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/brave_sync_categories_text"
             style="@style/BraveSyncButton" />
 
         <Button android:id="@+id/brave_sync_btn_add_device"

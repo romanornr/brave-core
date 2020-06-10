@@ -704,6 +704,9 @@ until they verify, or until 90 days have passed.
       <message name="IDS_BRAVE_SYNC_DELETE_SENT" desc="Text for Brave Sync delete request message.">
 	Delete request has been sent. Device will be removed shortly.
       </message>
+      <message name="IDS_BRAVE_SYNC_CATEGORIES_TEXT" desc="Text for show categories to sync button.">
+  Categories
+      </message>
       <message name="IDS_BRAVE_SYNC_REMOVE_DEVICE_TEXT" desc="Text for Brave Sync remove device message.">
 	Remove this device
       </message>
