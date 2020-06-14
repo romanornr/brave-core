@@ -208,50 +208,6 @@ Log.e(TAG, "[BraveSync] HandleReset 000");
       nativeHandleReset(mNativeBraveSyncWorker);
     }
 
-    @CalledByNative
-    public void OnDeviceInfoChangeJava() {
-Log.e(TAG, "[BraveSync] HandleReset 000");
-        if (mSyncScreensObserver != null) {
-            mSyncScreensObserver.onDevicesAvailable();
-        }
-    }
-
-    public class SyncDeviceInfo {
-        public String mName;
-        public boolean mIsCurrentDevice;
-        public String mType;
-        public Date mLastUpdatedTimestamp;
-    }
-
-    public ArrayList<SyncDeviceInfo> GetSyncDeviceList() {
-Log.e(TAG, "[BraveSync] GetSyncDeviceList 000");
-        ArrayList<SyncDeviceInfo> deviceList = new ArrayList<SyncDeviceInfo>();
-        String json = nativeGetSyncDeviceListJson(mNativeBraveSyncWorker);
-        json = "{\"devices\":"+json+"}";
-Log.e(TAG, "[BraveSync] GetSyncDeviceList json="+json);
-        try {
-            JSONObject result = new JSONObject(json);
-            JSONArray devices = result.getJSONArray("devices");
-Log.e(TAG, "[BraveSync] GetSyncDeviceList devices.length()="+devices.length());
-            for (int i = 0; i < devices.length(); i++) {
-              SyncDeviceInfo deviceInfo = new SyncDeviceInfo();
-              JSONObject device = devices.getJSONObject(i);
-              deviceInfo.mName = device.getString("name");
-              deviceInfo.mIsCurrentDevice = device.getBoolean("isCurrentDevice");
-              deviceInfo.mType = device.getString("type");
-              long lastUpdatedTimestamp = device.getLong("lastUpdatedTimestamp");
-              deviceInfo.mLastUpdatedTimestamp = new Date(lastUpdatedTimestamp);
-              deviceList.add(deviceInfo);
-            }
-        } catch (JSONException e) {
-            Log.e(TAG, "GetDeviceNameByObjectId JSONException error " + e);
-        } catch (IllegalStateException e) {
-            Log.e(TAG, "GetDeviceNameByObjectId IllegalStateException error " + e);
-        }
-Log.e(TAG, "[BraveSync] GetSyncDeviceList deviceList.size()="+deviceList.size());
-        return deviceList;
-    }
-
     private native void nativeInit();
     private native void nativeDestroy(long nativeBraveSyncWorker);
 
@@ -269,6 +225,4 @@ Log.e(TAG, "[BraveSync] GetSyncDeviceList deviceList.size()="+deviceList.size())
     private native boolean nativeIsFirstSetupComplete(long nativeBraveSyncWorker);
 
     private native void nativeHandleReset(long nativeBraveSyncWorker);
-
-    private native String nativeGetSyncDeviceListJson(long nativeBraveSyncWorker);
 }

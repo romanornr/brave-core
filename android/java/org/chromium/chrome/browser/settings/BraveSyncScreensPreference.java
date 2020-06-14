@@ -88,6 +88,7 @@ import org.chromium.chrome.browser.sync.settings.ManageSyncSettings;
 import org.chromium.chrome.browser.sync.BraveSyncService;
 import org.chromium.ui.KeyboardVisibilityDelegate;
 import org.chromium.ui.base.DeviceFormFactor;
+import org.chromium.chrome.browser.sync.BraveSyncDevices;
 
 import java.io.IOException;
 import java.lang.Runnable;
@@ -104,7 +105,8 @@ import java.util.TimerTask;
 public class BraveSyncScreensPreference extends BravePreferenceFragment
       implements View.OnClickListener, SettingsActivity.OnBackPressedListener,
       CompoundButton.OnCheckedChangeListener, BarcodeTracker.BarcodeGraphicTrackerCallback,
-      BraveSyncService.GetSettingsAndDevicesCallback {
+      BraveSyncService.GetSettingsAndDevicesCallback,
+      BraveSyncDevices.DeviceInfoChangedListener {
 
   private static final String TAG = "SYNC";
   // Permission request codes need to be < 256
@@ -177,6 +179,19 @@ public class BraveSyncScreensPreference extends BravePreferenceFragment
   private EditText mCodeWords;
   private FrameLayout mLayoutMobile;
   private FrameLayout mLayoutLaptop;
+
+  @Override
+  public void deviceInfoChanged() {
+      Log.e(TAG, "[BraveSync] BraveSyncScreensPreference.deviceInfoChanged 000");
+      if (mSyncScreensObserver != null) {
+Log.e(TAG, "[BraveSync] BraveSyncScreensPreference.deviceInfoChanged will call mSyncScreensObserver.onDevicesAvailable()");
+          mSyncScreensObserver.onDevicesAvailable();
+      } else {
+Log.e(TAG, "[BraveSync] BraveSyncScreensPreference.deviceInfoChanged mSyncScreensObserver is null");
+      }
+  }
+  boolean deviceInfoObserverSet = false;
+
 
   @Override
   public void onConfigurationChanged(Configuration newConfig) {
@@ -441,14 +456,12 @@ Log.e(TAG, "onDevicesAvailable 000");
                                       Log.w(TAG, "No need to load devices for other pages");
                                       return;
                                   }
-                                  BraveActivity mainActivity = BraveRewardsHelper.getBraveActivity();
-                                  // if (null != mainActivity && null != mainActivity.mBraveSyncWorker) {
-                                  ArrayList<BraveSyncWorker.SyncDeviceInfo> deviceInfos = mainActivity.mBraveSyncWorker.GetSyncDeviceList();
+                                  ArrayList<BraveSyncDevices.SyncDeviceInfo> deviceInfos = BraveSyncDevices.get().GetSyncDeviceList();
 Log.e(TAG, "[BraveSync] onDevicesAvailable deviceInfos.size()="+deviceInfos.size());
                                   ViewGroup insertPoint = (ViewGroup) getView().findViewById(R.id.brave_sync_devices);
                                   insertPoint.removeAllViews();
                                   int index = 0;
-                                  for (BraveSyncWorker.SyncDeviceInfo device : deviceInfos) {
+                                  for (BraveSyncDevices.SyncDeviceInfo device : deviceInfos) {
                                       View separator = (View) mInflater.inflate(R.layout.menu_separator, null);
                                       View listItemView = (View) mInflater.inflate(R.layout.brave_sync_device, null);
                                       if (null != listItemView && null != separator && null != insertPoint) {
@@ -1242,6 +1255,11 @@ Log.e(TAG, "[BraveSync] BraveSyncScreensPreference.onDestroy");
       if (mCameraSourcePreview != null) {
           mCameraSourcePreview.release();
       }
+Log.e(TAG, "[BraveSync] BraveSyncScreensPreference.onDestroy deviceInfoObserverSet="+deviceInfoObserverSet);
+      if (deviceInfoObserverSet) {
+          BraveSyncDevices.get().removeDeviceInfoChangedListener(this);
+          deviceInfoObserverSet = false;
+      }
   }
 
   private boolean isBarCodeValid(String barcode, boolean hexValue) {
@@ -1718,6 +1736,12 @@ Log.e(TAG, "[BraveSync] setSyncDoneLayout 000");
       assert (null != mainActivity && null != mainActivity.mBraveSyncWorker);
       mainActivity.mBraveSyncWorker.SaveCodephrase(GetCodephrase());
       mainActivity.mBraveSyncWorker.OnDidClosePage();
+
+Log.e(TAG, "[BraveSync] BraveSyncScreensPreference.setSyncDoneLayout deviceInfoObserverSet="+deviceInfoObserverSet);
+      if (!deviceInfoObserverSet) {
+          BraveSyncDevices.get().addDeviceInfoChangedListener(this);
+          deviceInfoObserverSet = true;
+      }
 
       getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
       getActivity().setTitle(R.string.sync_category_title);

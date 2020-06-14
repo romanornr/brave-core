@@ -10,7 +10,6 @@
 
 #include "base/android/jni_weak_ref.h"
 #include "base/scoped_observer.h"
-#include "components/sync_device_info/device_info_tracker.h"
 #include "components/sync/driver/sync_service.h"
 #include "components/sync/driver/sync_service_observer.h"
 
@@ -19,8 +18,7 @@ class Profile;
 namespace chrome {
 namespace android {
 
-class BraveSyncWorker : public syncer::SyncServiceObserver,
-                        public syncer::DeviceInfoTracker::Observer {
+class BraveSyncWorker : public syncer::SyncServiceObserver {
  public:
   BraveSyncWorker(JNIEnv* env,
     //jobject obj
@@ -50,20 +48,12 @@ class BraveSyncWorker : public syncer::SyncServiceObserver,
   void HandleReset(JNIEnv* env,
     const base::android::JavaParamRef<jobject>& jcaller);
 
-  base::android::ScopedJavaLocalRef<jstring>
-      GetSyncDeviceListJson(JNIEnv* env,
-      const base::android::JavaParamRef<jobject>& jcaller);
-
  private:
   syncer::SyncService* GetSyncService() const;
   void MarkFirstSetupComplete();
-  base::Value GetSyncDeviceList();
 
   // syncer::SyncServiceObserver implementation.
   void OnStateChanged(syncer::SyncService* sync) override;
-
-  // syncer::DeviceInfoTracker::Observer
-  void OnDeviceInfoChange() override;
 
   JavaObjectWeakGlobalRef weak_java_brave_sync_worker_;
   Profile* profile_ = nullptr;
@@ -72,9 +62,6 @@ class BraveSyncWorker : public syncer::SyncServiceObserver,
 
   ScopedObserver<syncer::SyncService, syncer::SyncServiceObserver>
       sync_service_observer_{this};
-
-  ScopedObserver<syncer::DeviceInfoTracker, syncer::DeviceInfoTracker::Observer>
-    device_info_tracker_observer_{this};
 
   DISALLOW_COPY_AND_ASSIGN(BraveSyncWorker);
 };

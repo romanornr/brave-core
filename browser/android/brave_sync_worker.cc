@@ -19,14 +19,10 @@
 
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/profiles/profile_manager.h"
-#include "chrome/browser/sync/device_info_sync_service_factory.h"
 #include "chrome/browser/sync/profile_sync_service_factory.h"
 
 #include "components/sync/driver/sync_service.h"
 #include "components/sync/driver/sync_user_settings.h"
-#include "components/sync_device_info/device_info_sync_service.h"
-#include "components/sync_device_info/device_info_tracker.h"
-#include "components/sync_device_info/local_device_info_provider.h"
 #include "components/unified_consent/unified_consent_metrics.h"
 
 #include "third_party/leveldatabase/src/include/leveldb/db.h"
@@ -128,14 +124,44 @@ DLOG(ERROR) << "[BraveSync] " << __func__ << " 000";
   if (service && !sync_service_observer_.IsObserving(service)) {
     sync_service_observer_.Add(service);
   }
+/*
+sync state observer
 
-  syncer::DeviceInfoTracker* tracker =
-    DeviceInfoSyncServiceFactory::GetForProfile(profile_)
-       ->GetDeviceInfoTracker();
-  DCHECK(tracker);
-  if (tracker && !device_info_tracker_observer_.IsObserving(tracker) ) {
-    device_info_tracker_observer_.Add(tracker);
-  }
+src/chrome/android/java/src/org/chromium/chrome/browser/sync/ProfileSyncService.java
+
+bool ProfileSyncServiceAndroid::Init() {
+  if (sync_service_) {
+    sync_service_->AddObserver(this);
+    return true;
+
+<=
+
+public void addSyncStateChangedListener(SyncStateChangedListener listener) {
+    ThreadUtils.assertOnUiThread();
+    mListeners.add(listener);
+}
+
+public void removeSyncStateChangedListener(SyncStateChangedListener listener) {
+    ThreadUtils.assertOnUiThread();
+    mListeners.remove(listener);
+}
+
+<=
+
+
+ProfileSyncService.get().addSyncStateChangedListener(this);
+@Override
+public void syncStateChanged() {
+    if (mType != getSyncErrorInfoBarType()) {
+        onCloseButtonClicked();
+    }
+}
+
+
+
+*/
+
+
 
   // TODO, AB: call SetSyncRequested(true) and sync_service_observer_ must be set and only if sync is not enabled
   // The point when it is invoked when sync is enabled is above on the stack
@@ -154,6 +180,26 @@ DLOG(ERROR) << "[BraveSync] " << __func__ << " 000";
     DCHECK_CURRENTLY_ON(BrowserThread::UI);
     sync_service_->GetUserSettings()->SetSyncRequested(true);
   }
+  <=
+  public void requestStart()
+  <=
+  src/chrome/android/java/src/org/chromium/chrome/browser/sync/settings/SyncSettingsUtils.java
+  public static void enableSync(boolean enable) {
+      ProfileSyncService profileSyncService = ProfileSyncService.get();
+      if (enable == profileSyncService.isSyncRequested()) return;
+
+      if (enable) {
+          profileSyncService.requestStart();
+      } else {
+          RecordHistogram.recordEnumeratedHistogram("Sync.StopSource",
+                  StopSource.CHROME_SYNC_SETTINGS, StopSource.STOP_SOURCE_LIMIT);
+          profileSyncService.requestStop();
+      }
+  }
+  or
+
+
+
   */
 }
 
@@ -365,52 +411,6 @@ void BraveSyncWorker::OnStateChanged(syncer::SyncService* sync) {
   if (!configuration.set_new_passphrase && !configuration.passphrase.empty())
     ProfileMetrics::LogProfileSyncInfo(ProfileMetrics::SYNC_PASSPHRASE);
 }
-
-void BraveSyncWorker::OnDeviceInfoChange() {
-  DLOG(ERROR) << "[BraveSync] " << __func__ << " 000";
-  // Notify UI page
-  JNIEnv* env = base::android::AttachCurrentThread();
-  Java_BraveSyncWorker_OnDeviceInfoChangeJava(env,
-      weak_java_brave_sync_worker_.get(env));
-}
-
-base::Value BraveSyncWorker::GetSyncDeviceList() {
-DLOG(ERROR) << "[BraveSync] " << __func__ << " 000";
-  auto* device_info_service =
-      DeviceInfoSyncServiceFactory::GetForProfile(profile_);
-  syncer::DeviceInfoTracker* tracker =
-      device_info_service->GetDeviceInfoTracker();
-  DCHECK(tracker);
-  const syncer::DeviceInfo* local_device_info = device_info_service
-     ->GetLocalDeviceInfoProvider()->GetLocalDeviceInfo();
-
-  base::Value device_list(base::Value::Type::LIST);
-
-  for (const auto& device : tracker->GetAllDeviceInfo()) {
-    auto device_value = base::Value::FromUniquePtrValue(device->ToValue());
-    bool is_current_device = local_device_info
-        ? local_device_info->guid() == device->guid()
-        : false;
-    device_value.SetBoolKey("isCurrentDevice", is_current_device);
-    device_list.Append(std::move(device_value));
-  }
-DLOG(ERROR) << "[BraveSync] " << __func__ << " device_list=" <<device_list;
-  return device_list;
-}
-
-base::android::ScopedJavaLocalRef<jstring>
-    BraveSyncWorker::GetSyncDeviceListJson(JNIEnv* env,
-    const base::android::JavaParamRef<jobject>& jcaller) {
-  base::Value device_list = GetSyncDeviceList();
-  std::string json_string;
-  if (!base::JSONWriter::Write(device_list, &json_string)) {
-    DVLOG(1) << "Writing as JSON failed. Passing empty string to Java code.";
-    json_string = std::string();
-  }
-DLOG(ERROR) << "[BraveSync] " << __func__ << " json_string=" << json_string;
-  return base::android::ConvertUTF8ToJavaString(env, json_string);
-}
-
 
 static void JNI_BraveSyncWorker_Init(
     JNIEnv* env,
