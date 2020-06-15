@@ -913,11 +913,13 @@ Log.e(TAG, "[BraveSync] BraveSyncScreensPreference.onClick");
           && v != mCancelLoadingButton && v != mQRCodeButton && v != mCodeWordsButton)) return;
 
       if (mScanChainCodeButton == v) {
-          showAddDeviceNameDialog(false /*createNewChain*/);
+Log.e(TAG, "[BraveSync] mScanChainCodeButton");
+          setJoinExistingChainLayout();
       } else if (mStartNewChainButton == v) {
 Log.e(TAG, "[BraveSync] mStartNewChainButton");
           // Creating a new chain
-          showAddDeviceNameDialog(true /*createNewChain*/);
+          GetCodephrase();
+          setNewChainLayout();
       } else if (mMobileButton == v) {
 Log.e(TAG, "[BraveSync] mMobileButton");
           setAddMobileDeviceLayout();
@@ -1365,66 +1367,6 @@ Log.e(TAG, "[BraveSync] BraveSyncScreensPreference.showEndDialog message="+messa
   // private void cancelTimeoutTimer() {
   //     mTimeoutTimer.cancel();
   // }
-
-  private void showAddDeviceNameDialog(boolean createNewChain) {
-Log.e(TAG, "[BraveSync] BraveSyncScreensPreference.showAddDeviceNameDialog createNewChain="+createNewChain);
-      LayoutInflater inflater = (LayoutInflater) getActivity().getSystemService(
-              Context.LAYOUT_INFLATER_SERVICE);
-      View view = inflater.inflate(R.layout.add_sync_device_name_dialog, null);
-      final EditText input = (EditText) view.findViewById(R.id.device_name);
-
-      DialogInterface.OnClickListener onClickListener = new DialogInterface.OnClickListener() {
-          @Override
-          public void onClick(DialogInterface dialog, int button) {
-              if (button == AlertDialog.BUTTON_POSITIVE) {
-                  mDeviceName = input.getText().toString();
-                  if (mDeviceName.isEmpty()) {
-                      mDeviceName = input.getHint().toString();
-                  }
-                  // Log.i(TAG, "mDeviceName just set: " + mDeviceName);
-                  // BravePrefServiceBridge.getInstance().setSyncDeviceName(mDeviceName);
-                  // SharedPreferences sharedPref = getActivity().getApplicationContext().getSharedPreferences(BraveSyncWorker.PREF_NAME, 0);
-                  // SharedPreferences.Editor editor = sharedPref.edit();
-                  // editor.putString(BraveSyncWorker.PREF_SYNC_DEVICE_NAME, mDeviceName);
-                  // editor.apply();
-Log.e(TAG, "[BraveSync] showAddDeviceNameDialog mDeviceName="+mDeviceName);
-Log.e(TAG, "[BraveSync] showAddDeviceNameDialog createNewChain="+createNewChain);
-                  if (createNewChain) {
-// BraveActivity mainActivity = BraveRewardsHelper.getBraveActivity();
-// if (null != mainActivity && null != mainActivity.mBraveSyncWorker) {
-// mainActivity.mBraveSyncWorker.createNewChain();
-// }
-GetCodephrase();
-                      setNewChainLayout();
-                  } else {
-                      setJoinExistingChainLayout();
-                  }
-              }
-          }
-      };
-
-      AlertDialog.Builder alert = new AlertDialog.Builder(getActivity(), R.style.Theme_Chromium_AlertDialog);
-      if (null == alert) {
-          return;
-      }
-      AlertDialog alertDialog = alert
-              .setTitle(R.string.brave_sync_settings_add_device_name_title)
-              .setMessage(getResources().getString(R.string.brave_sync_settings_add_device_name_label))
-              .setView(view)
-              .setPositiveButton(R.string.ok, onClickListener)
-              .setNegativeButton(R.string.cancel, onClickListener)
-              .create();
-      alertDialog.getDelegate().setHandleNativeActionModesEnabled(false);
-      alertDialog.setOnShowListener(new DialogInterface.OnShowListener() {
-          @Override
-          public void onShow(DialogInterface dialog) {
-            KeyboardVisibilityDelegate.getInstance().showKeyboard(input);
-          }
-      });
-      alertDialog.show();
-      Button cancelButton = alertDialog.getButton(AlertDialog.BUTTON_NEGATIVE);
-      cancelButton.setVisibility(View.GONE);
-  }
 
   private void deleteDeviceDialog(String deviceName, String deviceId, String deviceObjectId, View v) {
 Log.e(TAG, "[BraveSync] deleteDeviceDialog 000 deviceName=" + deviceName);

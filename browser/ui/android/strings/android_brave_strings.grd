@@ -782,17 +782,8 @@ until they verify, or until 90 days have passed.
       <message name="IDS_BRAVE_SYNC_USE_CAMERA_TEXT" desc="Text for Brave Sync use camera message.">
 	I'll use my camera...
       </message>
-      <message name="IDS_BRAVE_SYNC_EXAMPLE_DEVICE_NAME" desc="Text for Brave Sync example device name.">
-	Android device
-      </message>
       <message name="IDS_BRAVE_SYNC_DEVICE" desc="Text for sync device message.">
 	Sync device
-      </message>
-      <message name="IDS_BRAVE_SYNC_SETTINGS_ADD_DEVICE_NAME_TITLE" desc="Text for sync settings add device name.">
-	Add device name
-      </message>
-      <message name="IDS_BRAVE_SYNC_SETTINGS_ADD_DEVICE_NAME_LABEL" desc="Text for sync settings add device name label.">
-	Enter an optional name for this device
       </message>
       <message name="IDS_SETTINGS_EXIT" desc="Text for Settings exit.">
 	Settings exit
