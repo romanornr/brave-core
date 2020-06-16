@@ -260,8 +260,6 @@ Log.e(TAG, "[BraveSync] BraveSyncScreensPreference.onCreateView");
 Log.e(TAG, "[BraveSync] BraveSyncScreensPreference.onActivityCreated savedInstanceState=" + savedInstanceState);
       getActivity().setTitle(R.string.sign_in_sync);
 
-      mDeviceName = "STUB_DEVICE_NAME";
-
       BraveActivity mainActivity = BraveRewardsHelper.getBraveActivity();
       if (null != mainActivity && null != mainActivity.mBraveSyncWorker) {
           if (null == mSyncScreensObserver) {
@@ -474,9 +472,10 @@ Log.e(TAG, "[BraveSync] onDevicesAvailable device.mName="+device.mName);
 
                                           //if (currentDeviceId.equals(device.mDeviceId)) {
                                           if (device.mIsCurrentDevice) {
-                                               // Current device is deleted by button on the bottom
-                                               //deleteButton.setVisibility(View.GONE);
-                                               if (null != textView) {
+                                              mDeviceName = device.mName;
+                                              // Current device is deleted by button on the bottom
+                                              //deleteButton.setVisibility(View.GONE);
+                                              if (null != textView) {
                                                    // Highlight curret device
                                                    textView.setTextColor(ApiCompatibilityUtils.getColor(getActivity().getResources(), R.color.brave_theme_color));
                                                    String currentDevice = device.mName + " " + getResources().getString(R.string.brave_sync_this_device_text);
@@ -1011,7 +1010,7 @@ Log.e(TAG, "[BraveSync] mRemoveDeviceButton");
           //BraveActivity mainActivity = BraveRewardsHelper.getBraveActivity();
           //mainActivity.mBraveSyncWorker.HandleReset();
           //deleteDeviceDialog(deviceToDelete.mDeviceName, deviceToDelete.mDeviceId, deviceToDelete.mObjectId, mRemoveDeviceButton);
-          deleteDeviceDialog("This device", "-1", "???", mRemoveDeviceButton);
+          deleteDeviceDialog(mDeviceName);
       } else if (mShowCategoriesButton == v) {
 Log.e(TAG, "[BraveSync] mShowCategoriesButton");
           SettingsLauncher.getInstance().launchSettingsPage(
@@ -1304,8 +1303,9 @@ Log.e(TAG, "[BraveSync] BraveSyncScreensPreference.showEndDialog message="+messa
   //     mTimeoutTimer.cancel();
   // }
 
-  private void deleteDeviceDialog(String deviceName, String deviceId, String deviceObjectId, View v) {
+  private void deleteDeviceDialog(String deviceName) {
 Log.e(TAG, "[BraveSync] deleteDeviceDialog 000 deviceName=" + deviceName);
+        assert deviceName != null && !deviceName.isEmpty();
         AlertDialog.Builder alert = new AlertDialog.Builder(getActivity(), R.style.Theme_Chromium_AlertDialog);
         if (null == alert) {
             return;
@@ -1317,23 +1317,13 @@ Log.e(TAG, "[BraveSync] deleteDeviceDialog 000 deviceName=" + deviceName);
 Log.e(TAG, "[BraveSync] deleteDeviceDialog.onClick BUTTON_POSITIVE");
                     BraveActivity mainActivity = BraveRewardsHelper.getBraveActivity();
                     if (null != mainActivity && null != mainActivity.mBraveSyncWorker) {
-                    //     new Thread() {
-                    //         @Override
-                    //         public void run() {
-                    //             mainActivity.mBraveSyncWorker.SetUpdateDeleteDeviceName(BraveSyncWorker.DELETE_RECORD, deviceName, deviceId, deviceObjectId);
-                    //             mainActivity.mBraveSyncWorker.InterruptSyncSleep();
-                    //         }
-                    //     }.start();
-
-                    // Would go into DeviceResolver => ResetSync => mSyncScreensObserver.onResetSync();
-
-                    mainActivity.mBraveSyncWorker.HandleReset();
-                    //v.setEnabled(false); - AB: revert this when have the device list
-
-                    mSyncScreensObserver.onResetSync();
-
-
-                    //     startTimeoutTimerWithPopup(getResources().getString(R.string.brave_sync_delete_sent));
+// Would go into DeviceResolver => ResetSync => mSyncScreensObserver.onResetSync();
+                        mainActivity.mBraveSyncWorker.HandleReset();
+                        // TODO(alexeybarabash): if we will have ability to remove other devices
+                        // from the chain, will have to disable pre-device remove button:
+                        // View v, v.setEnabled(false);
+                        mSyncScreensObserver.onResetSync();
+                        //     startTimeoutTimerWithPopup(getResources().getString(R.string.brave_sync_delete_sent));
                     }
                     // TODO(sergz): Uncomment sync service impl when we fully migrate on sync v2
                     // if (null != mSyncService) {
