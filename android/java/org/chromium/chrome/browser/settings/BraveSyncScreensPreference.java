@@ -123,9 +123,6 @@ public class BraveSyncScreensPreference extends BravePreferenceFragment
   // Timeout to show cancel button while loading devices on sync chain creation
   private static final int CANCEL_LOAD_BUTTON_TIMEOUT = 15*1000;
 
-  // TODO(sergz): Uncomment sync service impl when we fully migrate on sync v2
-  // private BraveSyncService mSyncService;
-  // private BraveSyncServiceObserver mSyncServiceObserver;
   private BraveSyncScreensObserver mSyncScreensObserver;
   private Switch mSyncSwitchBookmarks;
   // The have a sync code button displayed in the Sync view.
@@ -621,65 +618,6 @@ Log.e(TAG, "[BraveSync] onDevicesAvailable device.mName="+device.mName);
           // TODO, AB: need to split sync state observer and devices observer
           mainActivity.mBraveSyncWorker.HandleShowSetupUI();
       }
-      // TODO(sergz): Uncomment sync service impl when we fully migrate on sync v2
-      // Initialize mSyncServiceObserver
-      // if (null != mSyncService) {
-      //     if (null == mSyncServiceObserver) {
-      //         mSyncServiceObserver = new BraveSyncServiceObserver() {
-      //             @Override
-      //             public void onSyncSetupError(String message) {
-      //                 try {
-      //                     if (null == getActivity()) {
-      //                         return;
-      //                     }
-      //                     if (null != message && !message.isEmpty()) {
-      //                         if (message.equals("Credential server response 400. Signed request body of the client timestamp is required.")) {
-      //                             message = getResources().getString(R.string.brave_sync_requires_correct_time);
-      //                         }
-      //                         message = " [" + message + "]";
-      //                     }
-      //                     final String messageFinal = (null == message) ? "" : message;
-      //                     getActivity().runOnUiThread(new Runnable() {
-      //                         @Override
-      //                         public void run() {
-      //                             cancelTimeoutTimer();
-      //                             showEndDialog(getResources().getString(R.string.brave_sync_device_failure) + messageFinal);
-      //                         }
-      //                     });
-      //                 } catch(Exception exc) {
-      //                     Log.e(TAG, "onSyncSetupError exception: " + exc);
-      //                 }
-      //             }
-
-      //             @Override
-      //             public void onSyncStateChanged() {
-      //             }
-
-      //             @Override
-      //             public void onHaveSyncWords(String[] syncWords) {
-      //                 try {
-      //                     if (null == getActivity()) {
-      //                         return;
-      //                     }
-      //                     getActivity().runOnUiThread(new Runnable() {
-      //                         @Override
-      //                         public void run() {
-      //                             cancelTimeoutTimer();
-      //                             mSyncService.onSetSyncEnabled(true);
-      //                             String words = "";
-      //                             for (int i = 0; i < syncWords.length; i++) {
-      //                                 words = words + " " + syncWords[i].trim();
-      //                             }
-      //                             mBraveSyncAddDeviceCodeWords.setText(words.trim());
-      //                         }
-      //                     });
-      //                 } catch(Exception exc) {
-      //                     Log.e(TAG, "onCodeWordsReceived exception: " + exc);
-      //                 }
-      //             }
-      //         };
-      //     }
-      // }
 
       mSyncSwitchBookmarks = (Switch) getView().findViewById(R.id.sync_bookmarks_switch);
       if (null != mSyncSwitchBookmarks) {
