@@ -85,10 +85,10 @@ import org.chromium.chrome.browser.settings.BravePreferenceFragment;
 import org.chromium.chrome.browser.settings.SettingsActivity;
 import org.chromium.chrome.browser.settings.SettingsLauncher;
 import org.chromium.chrome.browser.sync.settings.ManageSyncSettings;
+import org.chromium.chrome.browser.sync.BraveSyncDevices;
 import org.chromium.chrome.browser.sync.BraveSyncService;
 import org.chromium.ui.KeyboardVisibilityDelegate;
 import org.chromium.ui.base.DeviceFormFactor;
-import org.chromium.chrome.browser.sync.BraveSyncDevices;
 
 import java.io.IOException;
 import java.lang.Runnable;
@@ -329,9 +329,9 @@ Log.e(TAG, "onSeedReceived 103");
                                       if (null != mainActivity && null != mainActivity.mBraveSyncWorker) {
                                       //     mainActivity.mBraveSyncWorker.SetSyncEnabled(true);
                                       //     mainActivity.mBraveSyncWorker.InitSync(true, false);
-
-                                          //mainActivity.mBraveSyncWorker.SaveCodephrase();
-                                          mainActivity.mBraveSyncWorker.SaveCodephrase(GetCodephrase());
+                                          String wordsFromQr = mainActivity.mBraveSyncWorker.GetWordsFromSeedHex(seedHex);
+Log.e(TAG, "onSeedReceived 104 wordsFromQr="+wordsFromQr);
+                                          mainActivity.mBraveSyncWorker.SaveCodephrase(wordsFromQr);
                                           mainActivity.mBraveSyncWorker.OnDidClosePage();
                                       }
                                       setAppropriateView();
@@ -357,6 +357,7 @@ Log.e(TAG, "onSeedReceived 003 mScrollViewAddMobileDevice="+mScrollViewAddMobile
                                       //     qrData += hex;
                                       // }
                                       final String qrDataFinal = seedHex;
+Log.e(TAG, "onSeedReceived 003 qrDataFinal="+qrDataFinal);
                                       //Log.i(TAG, "Generate QR with data: " + qrDataFinal);
                                       new Thread(new Runnable() {
                                           @Override
@@ -971,7 +972,7 @@ Log.e(TAG, "[BraveSync] mConfirmCodeWordsButton - wrong words count");
 //24 words for now
           //
           if (null != mainActivity && null != mainActivity.mBraveSyncWorker) {
-              String hexString = mainActivity.mBraveSyncWorker.GetSeedHex(String.join(" ", words));
+              String hexString = mainActivity.mBraveSyncWorker.GetSeedHexFromWords(String.join(" ", words));
 Log.e(TAG, "[BraveSync] mConfirmCodeWordsButton - hexString="+hexString);
               if (hexString == null || hexString.isEmpty()) {
 Log.e(TAG, "[BraveSync] mConfirmCodeWordsButton - wrong codephrase");
@@ -994,7 +995,7 @@ Log.e(TAG, "[BraveSync] mConfirmCodeWordsButton - wrong codephrase");
           // mSyncScreensObserver.onSeedReceived(seedHex, true, false);
           mCodephrase = String.join(" ", words);
 Log.e(TAG, "[BraveSync] mConfirmCodeWordsButton - mCodephrase="+mCodephrase);
-          String seedHex = mainActivity.mBraveSyncWorker.GetSeedHex(GetCodephrase());
+          String seedHex = mainActivity.mBraveSyncWorker.GetSeedHexFromWords(GetCodephrase());
           if (null == seedHex || seedHex.isEmpty()) {
 //                      startTimeoutTimerWithPopup(getResources().getString(R.string.brave_sync_loading_data_title));
               // Init to receive new seed
@@ -1493,6 +1494,7 @@ Log.e(TAG, "[BraveSync] BraveSyncScreensPreference.setNewChainLayout");
 
   private String mCodephrase;
   public String GetCodephrase() {
+Log.e(TAG, "[BraveSync] GetCodephrase 000 mCodephrase="+mCodephrase);
     if (mCodephrase == null || mCodephrase.isEmpty()) {
       BraveActivity mainActivity = BraveRewardsHelper.getBraveActivity();
 Log.e(TAG, "[BraveSync] GetCodephrase - ask mainActivity.mBraveSyncWorker");
@@ -1559,9 +1561,9 @@ Log.e(TAG, "[BraveSync] InvalidateCodephrase 000");
               if (null != mainActivity && null != mainActivity.mBraveSyncWorker) {
                   // SharedPreferences sharedPref = getActivity().getApplicationContext().getSharedPreferences(BraveSyncWorker.PREF_NAME, 0);
                   // String seed = sharedPref.getString(BraveSyncWorker.PREF_SEED, null);
-
-                  //String seedHex = mainActivity.mBraveSyncWorker.GetSeedHex();
-                  String seedHex = mainActivity.mBraveSyncWorker.GetSeedHex(GetCodephrase());
+Log.e(TAG, "[BraveSync] setAddMobileDeviceLayout GetCodephrase()=" + GetCodephrase());
+                  String seedHex = mainActivity.mBraveSyncWorker.GetSeedHexFromWords(GetCodephrase());
+Log.e(TAG, "[BraveSync] setAddMobileDeviceLayout seedHex=" + seedHex);
                   if (null == seedHex || seedHex.isEmpty()) {
 //                      startTimeoutTimerWithPopup(getResources().getString(R.string.brave_sync_loading_data_title));
                       // Init to receive new seed
@@ -1619,7 +1621,7 @@ Log.e(TAG, "[BraveSync] setAddLaptopLayout.runOnUiThread.run 000");
                   // String seed = sharedPref.getString(BraveSyncWorker.PREF_SEED, null);
                   //String seedHex = null;
 Log.e(TAG, "[BraveSync] setAddLaptopLayout.runOnUiThread.run GetCodephrase()="+GetCodephrase());
-                  String seedHex = mainActivity.mBraveSyncWorker.GetSeedHex(GetCodephrase());
+                  String seedHex = mainActivity.mBraveSyncWorker.GetSeedHexFromWords(GetCodephrase());
 Log.e(TAG, "[BraveSync] setAddLaptopLayout.runOnUiThread.run seedHex="+seedHex);
                   if (null == seedHex || seedHex.isEmpty()) {
                       //startTimeoutTimerWithPopup(getResources().getString(R.string.brave_sync_loading_data_title));

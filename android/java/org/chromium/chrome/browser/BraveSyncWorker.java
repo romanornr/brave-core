@@ -177,10 +177,20 @@ Log.e(TAG, "[BraveSync] GetCodephrase codephrase="+codephrase);
 Log.e(TAG, "[BraveSync] SaveCodephrase codephrase="+codephrase);
       nativeSaveCodeWords(mNativeBraveSyncWorker, codephrase);
     }
-    public String GetSeedHex(String codephrase) {
-Log.e(TAG, "[BraveSync] GetSeedHex codephrase="+codephrase);
-Log.e(TAG, "[BraveSync] GetSeedHex hex="+nativeGetSeedHexFromWords(codephrase));
-      return nativeGetSeedHexFromWords(codephrase);
+    public String GetSeedHexFromWords(String codephrase) {
+Log.e(TAG, "[BraveSync] GetSeedHexFromWords codephrase="+codephrase);
+      String seedHex = nativeGetSeedHexFromWords(codephrase);
+Log.e(TAG, "[BraveSync] GetSeedHexFromWords seedHex="+seedHex);
+      //return nativeGetSeedHexFromWords(codephrase);
+      return seedHex;
+    }
+
+    public String GetWordsFromSeedHex(String seedHex) {
+Log.e(TAG, "[BraveSync] GetWordsFromSeedHex seedHex="+seedHex);
+      //return nativeGetWordsFromSeedHex(seedHex);
+      String words = nativeGetWordsFromSeedHex(seedHex);
+Log.e(TAG, "[BraveSync] GetWordsFromSeedHex words="+words);
+      return words;
     }
 
     public void InitScreensObserver(BraveSyncScreensObserver syncScreensObserver) {
@@ -218,6 +228,7 @@ Log.e(TAG, "[BraveSync] HandleReset 000");
     private native void nativeHandleShowSetupUI(long nativeBraveSyncWorker);
 
     private native String nativeGetSeedHexFromWords(String passphrase);
+    private native String nativeGetWordsFromSeedHex(String seedHex);
     private native void nativeSaveCodeWords(long nativeBraveSyncWorker, String passphrase);
 
     private native void nativeOnDidClosePage(long nativeBraveSyncWorker);

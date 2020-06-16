@@ -441,5 +441,28 @@ DLOG(ERROR) << "[BraveSync] " << __func__ << " sync_code_hex="<<sync_code_hex;
   return base::android::ConvertUTF8ToJavaString(env, sync_code_hex);
 }
 
+base::android::ScopedJavaLocalRef<jstring> JNI_BraveSyncWorker_GetWordsFromSeedHex(
+  JNIEnv* env,
+  const base::android::JavaParamRef<jobject>& jcaller,
+  const base::android::JavaParamRef<jstring>& seed_hex) {
+DLOG(ERROR) << "[BraveSync] " << __func__ << " 000";
+  std::string str_seed_hex = base::android::ConvertJavaStringToUTF8(
+        seed_hex);
+  DCHECK(!str_seed_hex.empty());
+DLOG(ERROR) << "[BraveSync] " << __func__ << " str_seed_hex="<<str_seed_hex;
+  std::vector<uint8_t> bytes;
+  std::string sync_code_words;
+  if (base::HexStringToBytes(str_seed_hex, &bytes)) {
+    DCHECK_EQ(bytes.size(), 32u);
+    sync_code_words = brave_sync::crypto::PassphraseFromBytes32(bytes);
+    DCHECK_NE(sync_code_words, "");
+  } else {
+    DLOG(WARNING) << "[BraveSync] " << __func__ <<
+        " HexStringToBytes failed for " << str_seed_hex;
+  }
+DLOG(ERROR) << "[BraveSync] " << __func__ << " sync_code_words="<<sync_code_words;
+  return base::android::ConvertUTF8ToJavaString(env, sync_code_words);
+}
+
 }  // namespace android
 }  // namespace chrome
