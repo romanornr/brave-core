@@ -1,8 +1,8 @@
 diff --git a/third_party/blink/renderer/core/inspector/inspector_page_agent.cc b/third_party/blink/renderer/core/inspector/inspector_page_agent.cc
-index 98229c0fc7ff5c86fe0da4d20936cbcfe90c9720..0130fc2cfacb22aa2633c83560c858232b785f7f 100644
+index 6167472566eb..707f6641e66d 100644
 --- a/third_party/blink/renderer/core/inspector/inspector_page_agent.cc
 +++ b/third_party/blink/renderer/core/inspector/inspector_page_agent.cc
-@@ -83,6 +83,8 @@
+@@ -84,6 +84,8 @@
  #include "third_party/blink/renderer/platform/wtf/vector.h"
  #include "v8/include/v8-inspector.h"
  
@@ -11,7 +11,17 @@ index 98229c0fc7ff5c86fe0da4d20936cbcfe90c9720..0130fc2cfacb22aa2633c83560c85823
  namespace blink {
  
  using protocol::Response;
-@@ -858,7 +860,7 @@ void InspectorPageAgent::DidClearDocumentOfWindowObject(LocalFrame* frame) {
+@@ -109,7 +111,8 @@ String ClientNavigationReasonToProtocol(ClientNavigationReason reason) {
+     case ClientNavigationReason::kReload:
+       return ReasonEnum::Reload;
+     default:
+-      NOTREACHED();
++      return ReasonEnum::Reload;
++      //NOTREACHED();
+   }
+   return ReasonEnum::Reload;
+ }
+@@ -859,7 +862,7 @@ void InspectorPageAgent::DidClearDocumentOfWindowObject(LocalFrame* frame) {
      const String world_name = worlds_to_evaluate_on_load_.Get(key);
      if (world_name.IsEmpty()) {
        frame->GetScriptController().ExecuteScriptInMainWorld(
@@ -20,7 +30,7 @@ index 98229c0fc7ff5c86fe0da4d20936cbcfe90c9720..0130fc2cfacb22aa2633c83560c85823
            ScriptController::kExecuteScriptWhenScriptsDisabled);
        continue;
      }
-@@ -872,12 +874,14 @@ void InspectorPageAgent::DidClearDocumentOfWindowObject(LocalFrame* frame) {
+@@ -873,12 +876,14 @@ void InspectorPageAgent::DidClearDocumentOfWindowObject(LocalFrame* frame) {
      // a foreign world.
      v8::HandleScope handle_scope(V8PerIsolateData::MainThreadIsolate());
      frame->GetScriptController().ExecuteScriptInIsolatedWorld(
@@ -37,7 +47,29 @@ index 98229c0fc7ff5c86fe0da4d20936cbcfe90c9720..0130fc2cfacb22aa2633c83560c85823
          ScriptController::kExecuteScriptWhenScriptsDisabled);
    }
  }
-@@ -1380,6 +1384,29 @@ Response InspectorPageAgent::setInterceptFileChooserDialog(bool enabled) {
+@@ -941,6 +946,21 @@ void InspectorPageAgent::FrameRequestedNavigation(
+     Frame* target_frame,
+     const KURL& url,
+     ClientNavigationReason reason) {
++#if BUILDFLAG(BRAVE_PAGE_GRAPH_ENABLED)
++  if (target_frame->IsMainFrame()) { // probably not right once remote frames have PG support
++    LocalFrame* main_frame = inspected_frames_->Root();
++    if (main_frame) {
++      Document* document = main_frame->GetDocument();
++      if (document) {
++        ::brave_page_graph::PageGraph* const page_graph = document->GetPageGraph();
++        if (page_graph) {
++              std::string graphml(page_graph->ToGraphML());
++              GetFrontend()->finalPageGraph(String::FromUTF8(graphml.c_str()));
++        }
++      }
++    }
++  }
++#endif
+   GetFrontend()->frameRequestedNavigation(
+       IdentifiersFactory::FrameId(target_frame),
+       ClientNavigationReasonToProtocol(reason), url.GetString());
+@@ -1380,6 +1400,29 @@ Response InspectorPageAgent::setInterceptFileChooserDialog(bool enabled) {
    return Response::OK();
  }
  

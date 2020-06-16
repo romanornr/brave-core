@@ -1,5 +1,5 @@
 diff --git a/third_party/blink/renderer/core/loader/frame_loader.cc b/third_party/blink/renderer/core/loader/frame_loader.cc
-index 1c1bd65c5f7ac55bf9d1f33ae7d7bcd2a5bc9d24..a4d38630fd7c0f4c7b4cd2c34add21227e7b8c52 100644
+index 746c175f5277..f420149f314c 100644
 --- a/third_party/blink/renderer/core/loader/frame_loader.cc
 +++ b/third_party/blink/renderer/core/loader/frame_loader.cc
 @@ -121,6 +121,13 @@
@@ -16,7 +16,16 @@ index 1c1bd65c5f7ac55bf9d1f33ae7d7bcd2a5bc9d24..a4d38630fd7c0f4c7b4cd2c34add2122
  namespace blink {
  
  bool IsBackForwardLoadType(WebFrameLoadType type) {
-@@ -765,6 +772,23 @@ void FrameLoader::StartNavigation(const FrameLoadRequest& passed_request,
+@@ -765,7 +772,7 @@ void FrameLoader::StartNavigation(const FrameLoadRequest& passed_request,
+     }
+   }
+ 
+-  if (request.ClientRedirectReason() != ClientNavigationReason::kNone) {
++  if (1/*request.ClientRedirectReason() != ClientNavigationReason::kNone*/) {
+     probe::FrameRequestedNavigation(frame_, frame_, url,
+                                     request.ClientRedirectReason());
+   }
+@@ -774,6 +781,23 @@ void FrameLoader::StartNavigation(const FrameLoadRequest& passed_request,
        origin_document ? origin_document->AddressSpace()
                        : network::mojom::IPAddressSpace::kUnknown;
  
