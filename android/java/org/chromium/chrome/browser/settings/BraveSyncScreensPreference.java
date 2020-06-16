@@ -613,7 +613,6 @@ Log.e(TAG, "[BraveSync] onDevicesAvailable device.mName="+device.mName);
           }
           //mainActivity.mBraveSyncWorker.InitJSWebView(mSyncScreensObserver);
           //mainActivity.mBraveSyncWorker.InitV2(mSyncScreensObserver);
-          mainActivity.mBraveSyncWorker.InitScreensObserver(mSyncScreensObserver);
 
           // TODO, AB: need to split sync state observer and devices observer
           mainActivity.mBraveSyncWorker.HandleShowSetupUI();

@@ -25,7 +25,6 @@ import org.chromium.base.Log;
 import org.chromium.base.ThreadUtils;
 import org.chromium.components.url_formatter.UrlFormatter;
 import org.chromium.chrome.browser.partnerbookmarks.PartnerBookmarksShim;
-import org.chromium.chrome.browser.preferences.BraveSyncScreensObserver;
 import org.chromium.content_public.browser.LoadUrlParams;
 import org.chromium.components.embedder_support.view.ContentView;
 import org.chromium.ui.base.ViewAndroidDelegate;
@@ -66,7 +65,6 @@ public class BraveSyncWorker {
 
     private Context mContext;
     private String mDebug = "true";
-    private BraveSyncScreensObserver mSyncScreensObserver;
 
     private long mNativeBraveSyncWorker;
 
@@ -191,10 +189,6 @@ Log.e(TAG, "[BraveSync] GetWordsFromSeedHex seedHex="+seedHex);
       String words = nativeGetWordsFromSeedHex(seedHex);
 Log.e(TAG, "[BraveSync] GetWordsFromSeedHex words="+words);
       return words;
-    }
-
-    public void InitScreensObserver(BraveSyncScreensObserver syncScreensObserver) {
-      mSyncScreensObserver = syncScreensObserver;
     }
 
     public void HandleShowSetupUI() {
