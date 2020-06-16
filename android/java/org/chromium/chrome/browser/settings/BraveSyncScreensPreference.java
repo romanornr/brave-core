@@ -86,7 +86,6 @@ import org.chromium.chrome.browser.settings.SettingsActivity;
 import org.chromium.chrome.browser.settings.SettingsLauncher;
 import org.chromium.chrome.browser.sync.settings.ManageSyncSettings;
 import org.chromium.chrome.browser.sync.BraveSyncDevices;
-import org.chromium.chrome.browser.sync.BraveSyncService;
 import org.chromium.ui.KeyboardVisibilityDelegate;
 import org.chromium.ui.base.DeviceFormFactor;
 
@@ -105,7 +104,6 @@ import java.util.TimerTask;
 public class BraveSyncScreensPreference extends BravePreferenceFragment
       implements View.OnClickListener, SettingsActivity.OnBackPressedListener,
       CompoundButton.OnCheckedChangeListener, BarcodeTracker.BarcodeGraphicTrackerCallback,
-      BraveSyncService.GetSettingsAndDevicesCallback,
       BraveSyncDevices.DeviceInfoChangedListener {
 
   private static final String TAG = "SYNC";
@@ -1816,94 +1814,4 @@ Log.e(TAG, "[BraveSync] BraveSyncScreensPreference.onBackPressed");
 
   @Override
   public void onCreatePreferences(Bundle bundle, String s) {}
-
-  @Override
-  public void onGetSettingsAndDevices(ArrayList<BraveSyncService.ResolvedRecordToApply> devices) {
-Log.e(TAG, "[BraveSync] BraveSyncScreensPreference.onGetSettingsAndDevices");
-      try {
-          if (null == getActivity()) {
-              return;
-          }
-          getActivity()
-                  .runOnUiThread(
-                          new Runnable() {
-                              @Override
-                              public void run() {
-                                  if (View.VISIBLE != mScrollViewSyncDone.getVisibility()) {
-                                      Log.w(TAG, "No need to load devices for other pages");
-                                      return;
-                                  }
-                                  // TODO(sergz): Uncomment sync service impl when we fully migrate on sync v2
-                                  // String currentDeviceId = BravePrefServiceBridge.getInstance().getSyncDeviceId();
-                                  // Load other devices in chain
-                                  // if (null != mSyncService) {
-                                  //     new Thread(new Runnable() {
-                                  //         @Override
-                                  //         public void run() {
-                                  //             if (null == getActivity()) {
-                                  //                 return;
-                                  //             }
-                                  //             getActivity().runOnUiThread(new Runnable() {
-                                  //                 @Override
-                                  //                 public void run() {
-                                  //                     ViewGroup insertPoint = (ViewGroup) getView().findViewById(R.id.brave_sync_devices);
-                                  //                     insertPoint.removeAllViews();
-                                  //                     cancelTimeoutTimer();
-                                  //                     int index = 0;
-                                  //                     for (BraveSyncService.ResolvedRecordToApply device : devices) {
-                                  //                         View separator = (View) mInflater.inflate(R.layout.menu_separator, null);
-                                  //                         View listItemView = (View) mInflater.inflate(R.layout.brave_sync_device, null);
-                                  //                         if (null != listItemView && null != separator && null != insertPoint) {
-                                  //                             TextView textView = (TextView) listItemView.findViewById(R.id.brave_sync_device_text);
-                                  //                             if (null != textView) {
-                                  //                                 textView.setText(device.mDeviceName);
-                                  //                             }
-                                  //                             AppCompatImageView deleteButton = (AppCompatImageView) listItemView.findViewById(R.id.brave_sync_remove_device);
-                                  //                             if (null != deleteButton) {
-                                  //                                 if (currentDeviceId.equals(device.mDeviceId)) {
-                                  //                                     // Current device is deleted by button on the bottom
-                                  //                                     deleteButton.setVisibility(View.GONE);
-                                  //                                     if (null != textView) {
-                                  //                                         // Highlight curret device
-                                  //                                         textView.setTextColor(ApiCompatibilityUtils.getColor(getActivity().getResources(), R.color.brave_theme_color));
-                                  //                                         String currentDevice = device.mDeviceName + " " + getResources().getString(R.string.brave_sync_this_device_text);
-                                  //                                         textView.setText(currentDevice);
-                                  //                       }
-                                  //                                     if (null != mRemoveDeviceButton) {
-                                  //                                         mRemoveDeviceButton.setTag(device);
-                                  //                                         mRemoveDeviceButton.setVisibility(View.VISIBLE);
-                                  //                                         mRemoveDeviceButton.setEnabled(true);
-                                  //                                     }
-                                  //                                 } else {
-                                  //                                     deleteButton.setTag(device);
-                                  //                                     deleteButton.setOnClickListener(v -> {
-                                  //                                         BraveSyncService.ResolvedRecordToApply deviceToDelete = (BraveSyncService.ResolvedRecordToApply) v.getTag();
-                                  //                                         deleteDeviceDialog(deviceToDelete.mDeviceName, deviceToDelete.mDeviceId, deviceToDelete.mObjectId, v);
-                                  //                                     });
-                                  //                                 }
-                                  //                             }
-
-                                  //                             insertPoint.addView(separator, index++);
-                                  //                             insertPoint.addView(listItemView, index++);
-                                  //                         }
-                                  //                     }
-                                  //                     if (index > 0) {
-                                  //                         dismissCancelLoadingButton();
-                                  //                         mBraveSyncTextDevicesTitle.setText(getResources().getString(R.string.brave_sync_devices_title));
-                                  //                         View separator = (View) mInflater.inflate(R.layout.menu_separator, null);
-                                  //                         if (null != insertPoint && null != separator) {
-                                  //                             insertPoint.addView(separator, index++);
-                                  //                         }
-                                  //                     }
-                                  //                 }
-                                  //             });
-                                  //         }
-                                  //     }).start();
-                                  // }
-                              }
-                          });
-      } catch (Exception exc) {
-          Log.e(TAG, "onDevicesAvailable exception: " + exc);
-      }
-  }
 }
