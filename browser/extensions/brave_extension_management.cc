@@ -14,7 +14,6 @@
 #include "brave/common/brave_switches.h"
 #include "brave/common/extensions/extension_constants.h"
 #include "brave/common/pref_names.h"
-#include "brave/components/ipfs/browser/buildflags/buildflags.h"
 #include "chrome/browser/extensions/external_policy_loader.h"
 #include "chrome/browser/profiles/profile.h"
 #include "components/prefs/pref_service.h"
@@ -24,10 +23,6 @@
 
 #if BUILDFLAG(ENABLE_TOR)
 #include "brave/browser/extensions/brave_tor_client_updater.h"
-#endif
-
-#if BUILDFLAG(IPFS_ENABLED)
-#include "brave/components/ipfs/browser/brave_ipfs_client_updater.h"
 #endif
 
 namespace extensions {
@@ -51,12 +46,6 @@ void BraveExtensionManagement::RegisterBraveExtensions() {
 #if BUILDFLAG(ENABLE_TOR)
   if (!profile_->AsTestingProfile())
     g_brave_browser_process->tor_client_updater()->Register();
-#endif
-
-#if BUILDFLAG(IPFS_ENABLED)
-  if (!base::CommandLine::ForCurrentProcess()->HasSwitch(
-          switches::kDisableIpfsClientUpdaterExtension))
-    g_brave_browser_process->ipfs_client_updater()->Register();
 #endif
 }
 

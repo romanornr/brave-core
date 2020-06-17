@@ -5,7 +5,9 @@
 
 #include "brave/browser/brave_tab_helpers.h"
 
+#include "base/command_line.h"
 #include "brave/browser/ui/bookmark/brave_bookmark_tab_helper.h"
+#include "brave/common/brave_switches.h"
 #include "brave/components/brave_ads/browser/ads_tab_helper.h"
 #include "brave/components/brave_perf_predictor/browser/buildflags.h"
 #include "brave/components/brave_rewards/browser/buildflags/buildflags.h"
@@ -13,6 +15,7 @@
 #include "brave/components/brave_shields/browser/buildflags/buildflags.h"  // For STP
 #include "brave/components/brave_wayback_machine/buildflags.h"
 #include "brave/components/greaselion/browser/buildflags/buildflags.h"
+#include "brave/components/ipfs/browser/buildflags/buildflags.h"
 #include "brave/components/speedreader/buildflags.h"
 #include "content/public/browser/web_contents.h"
 #include "third_party/widevine/cdm/buildflags.h"
@@ -49,6 +52,10 @@
 
 #if BUILDFLAG(ENABLE_SPEEDREADER)
 #include "brave/browser/speedreader/speedreader_tab_helper.h"
+#endif
+
+#if BUILDFLAG(IPFS_ENABLED)
+#include "brave/browser/ipfs/ipfs_tab_helper.h"
 #endif
 
 namespace brave {
@@ -96,6 +103,13 @@ void AttachTabHelpers(content::WebContents* web_contents) {
 
 #if BUILDFLAG(ENABLE_SPEEDREADER)
   speedreader::SpeedreaderTabHelper::CreateForWebContents(web_contents);
+#endif
+
+#if BUILDFLAG(IPFS_ENABLED)
+  if (!base::CommandLine::ForCurrentProcess()->HasSwitch(
+      switches::kDisableIpfsClientUpdaterExtension)) {
+    ipfs::IPFSTabHelper::CreateForWebContents(web_contents);
+  }
 #endif
 }
 
