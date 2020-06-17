@@ -103,7 +103,7 @@ import java.util.TimerTask;
  */
 public class BraveSyncScreensPreference extends BravePreferenceFragment
       implements View.OnClickListener, SettingsActivity.OnBackPressedListener,
-      CompoundButton.OnCheckedChangeListener, BarcodeTracker.BarcodeGraphicTrackerCallback,
+      BarcodeTracker.BarcodeGraphicTrackerCallback,
       BraveSyncDevices.DeviceInfoChangedListener {
 
   public static final int BIP39_WORD_COUNT = 24;
@@ -121,7 +121,6 @@ public class BraveSyncScreensPreference extends BravePreferenceFragment
   private static final int MAX_HEIGHT = 1024;
 
   private BraveSyncScreensObserver mSyncScreensObserver;
-  private Switch mSyncSwitchBookmarks;
   // The have a sync code button displayed in the Sync view.
   private Button mScanChainCodeButton;
   private Button mStartNewChainButton;
@@ -600,11 +599,6 @@ Log.e(TAG, "[BraveSync] onDevicesAvailable device.mName="+device.mName);
           mainActivity.mBraveSyncWorker.HandleShowSetupUI();
       }
 
-      mSyncSwitchBookmarks = (Switch) getView().findViewById(R.id.sync_bookmarks_switch);
-      if (null != mSyncSwitchBookmarks) {
-          mSyncSwitchBookmarks.setOnCheckedChangeListener(this);
-      }
-
       mScrollViewSyncInitial = (ScrollView) getView().findViewById(R.id.view_sync_initial);
       mScrollViewSyncChainCode = (ScrollView) getView().findViewById(R.id.view_sync_chain_code);
       mScrollViewSyncStartChain = (ScrollView) getView().findViewById(R.id.view_sync_start_chain);
@@ -985,21 +979,6 @@ Log.e(TAG, "[BraveSync] mAddDeviceButton");
 Log.e(TAG, "[BraveSync] mCancelLoadingButton");
           cancelLoadingResetAndBack();
       }
-  }
-
-  @Override
-  public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-Log.e(TAG, "[BraveSync] BraveSyncScreensPreference.onCheckedChanged isChecked="+isChecked);
-      if ((getActivity() == null) || (buttonView != mSyncSwitchBookmarks)) {
-          Log.w(TAG, "Unknown button");
-          return;
-      }
-      // TODO(sergz): Uncomment sync service impl when we fully migrate on sync v2
-      // if (null != mSyncService) {
-      //     if (buttonView == mSyncSwitchBookmarks) {
-      //         mSyncService.onSetSyncBookmarks(isChecked);
-      //     }
-      // }
   }
 
   private void showMainSyncScrypt() {
