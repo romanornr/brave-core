@@ -14,9 +14,9 @@
 #include "brave/components/l10n/browser/locale_helper_mock.h"
 #include "testing/gmock/include/gmock/gmock.h"
 #include "testing/gtest/include/gtest/gtest.h"
-#include "bat/ads/creative_ad_info.h"
 #include "bat/ads/internal/ads_client_mock.h"
 #include "bat/ads/internal/ads_impl.h"
+#include "bat/ads/internal/creative_ad_info.h"
 #include "bat/ads/internal/frequency_capping/frequency_capping_unittest_utils.h"
 #include "bat/ads/internal/unittest_utils.h"
 
