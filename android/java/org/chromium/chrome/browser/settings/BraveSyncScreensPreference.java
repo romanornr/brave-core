@@ -94,9 +94,6 @@ import java.lang.Runnable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
-
 
 /**
  * Settings fragment that allows to control Sync functionality.
@@ -134,8 +131,6 @@ public class BraveSyncScreensPreference extends BravePreferenceFragment
   private ImageButton mPasteButton;
   private Button mCopyButton;
   private Button mAddDeviceButton;
-  private Button mCancelLoadingButton;
-  private Timer mCancelLoadingButtonUpdater;
   private Button mRemoveDeviceButton;
   private Button mShowCategoriesButton;
   private Button mQRCodeButton;
@@ -592,9 +587,6 @@ Log.e(TAG, "[BraveSync] onDevicesAvailable device.mName="+device.mName);
                   }
               };
           }
-          //mainActivity.mBraveSyncWorker.InitJSWebView(mSyncScreensObserver);
-          //mainActivity.mBraveSyncWorker.InitV2(mSyncScreensObserver);
-
           // TODO, AB: need to split sync state observer and devices observer
           mainActivity.mBraveSyncWorker.HandleShowSetupUI();
       }
@@ -692,11 +684,6 @@ Log.e(TAG, "[BraveSync] onDevicesAvailable device.mName="+device.mName);
       mAddDeviceButton = (Button) getView().findViewById(R.id.brave_sync_btn_add_device);
       if (null != mAddDeviceButton) {
           mAddDeviceButton.setOnClickListener(this);
-      }
-
-      mCancelLoadingButton = (Button) getView().findViewById(R.id.brave_sync_btn_cancel_loading);
-      if (null != mCancelLoadingButton) {
-          mCancelLoadingButton.setOnClickListener(this);
       }
 
       mRemoveDeviceButton = (Button) getView().findViewById(R.id.brave_sync_btn_remove_device);
@@ -808,7 +795,7 @@ Log.e(TAG, "[BraveSync] BraveSyncScreensPreference.onClick");
           && v != mEnterCodeWordsButton && v != mDoneButton && v != mDoneLaptopButton
           && v != mUseCameraButton && v != mConfirmCodeWordsButton && v != mMobileButton && v != mLaptopButton
           && v != mPasteButton && v != mCopyButton && v != mRemoveDeviceButton && v != mShowCategoriesButton && v != mAddDeviceButton
-          && v != mCancelLoadingButton && v != mQRCodeButton && v != mCodeWordsButton)) return;
+          && v != mQRCodeButton && v != mCodeWordsButton)) return;
 
       if (mScanChainCodeButton == v) {
 Log.e(TAG, "[BraveSync] mScanChainCodeButton");
@@ -975,9 +962,6 @@ Log.e(TAG, "[BraveSync] mShowCategoriesButton");
       } else if (mAddDeviceButton == v) {
 Log.e(TAG, "[BraveSync] mAddDeviceButton");
           setNewChainLayout();
-      } else if (mCancelLoadingButton == v) {
-Log.e(TAG, "[BraveSync] mCancelLoadingButton");
-          cancelLoadingResetAndBack();
       }
   }
 
@@ -1337,17 +1321,6 @@ Log.e(TAG, "[BraveSync] BraveSyncScreensPreference.setNewChainLayout");
           mScrollViewSyncDone.setVisibility(View.GONE);
       }
       adjustImageButtons(getActivity().getApplicationContext().getResources().getConfiguration().orientation);
-  }
-
-  private void cancelLoadingResetAndBack() {
-      // TODO(sergz): Uncomment sync service impl when we fully migrate on sync v2
-      // if (null != mSyncService) {
-      //     mSyncService.onResetSync();
-      // }
-      // BraveActivity mainActivity = BraveRewardsHelper.getBraveActivity();
-      // if (null != mainActivity && null != mainActivity.mBraveSyncWorker) {
-      //     mainActivity.mBraveSyncWorker.ResetSync();
-      // }
   }
 
   private String mCodephrase;
