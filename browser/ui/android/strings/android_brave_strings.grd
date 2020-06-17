@@ -657,10 +657,6 @@ until they verify, or until 90 days have passed.
       <message name="IDS_BRAVE_ADS_EXISTING_USER_OFFER_TITLE" desc="Title for Brave Ads offer.">
         Brave Ads are here!
       </message>
-<!--      <message name="IDS_BRAVE_SYNC_REQUIRES_CORRECT_TIME" desc="Text for Brave Sync requires correct time.">
-	Your computer's clock may be set to the wrong time, or to the wrong time-zone. Check your clock settings
-      </message>
--->
       <message name="IDS_BRAVE_SYNC_DEVICE_FAILURE" desc="Text for Brave Sync device failure.">
 	Sync could not be setup
       </message>
@@ -678,6 +674,9 @@ until they verify, or until 90 days have passed.
       </message>
       <message name="IDS_BRAVE_SYNC_WORD_COUNT_ERROR" desc="Text for Brave Sync word count error.">
 	Incorrect number of words
+      </message>
+      <message name="IDS_BRAVE_SYNC_WRONG_CODE_ERROR" desc="Text for wrong Brave Sync code error.">
+	Wrong sync code
       </message>
 <!--      <message name="IDS_BRAVE_SYNC_TIME_OUT_MESSAGE" desc="Text for Brave Sync time out message.">
 	Something went wrong, looks like your request timed out.
@@ -700,9 +699,6 @@ until they verify, or until 90 days have passed.
       </message>
       <message name="IDS_BRAVE_SYNC_CODE_WORDS_TITLE" desc="Text for Brave Sync code words title.">
 	Pair
-      </message>
-      <message name="IDS_BRAVE_SYNC_DELETE_SENT" desc="Text for Brave Sync delete request message.">
-	Delete request has been sent. Device will be removed shortly.
       </message>
       <message name="IDS_BRAVE_SYNC_CATEGORIES_TEXT" desc="Text for show categories to sync button.">
   Categories
@@ -815,9 +811,6 @@ until they verify, or until 90 days have passed.
       <message name="IDS_ACCESSIBILITY_TOOLBAR_BTN_BOOKMARK" desc="Content description for the bookmark button.">
         Create a bookmark
       </message>
-<!--      <message name="IDS_SYNC_REQUIRES_CORRECT_TIME" desc="The message for the dialog where the user notified about sync setup failure.">
-        Your computer's clock may be set to the wrong time, or to the wrong time-zone. Check your clock settings
-      </message> -->
       <message name="IDS_SYNC_DEVICE_FAILURE" desc="The message for the dialog where the user notified about sync setup failure.">
         Sync could not be setup
       </message>

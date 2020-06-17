@@ -106,6 +106,7 @@ public class BraveSyncScreensPreference extends BravePreferenceFragment
       CompoundButton.OnCheckedChangeListener, BarcodeTracker.BarcodeGraphicTrackerCallback,
       BraveSyncDevices.DeviceInfoChangedListener {
 
+  public static final int BIP39_WORD_COUNT = 24;
   private static final String TAG = "SYNC";
   // Permission request codes need to be < 256
   private static final int RC_HANDLE_CAMERA_PERM = 2;
@@ -118,10 +119,6 @@ public class BraveSyncScreensPreference extends BravePreferenceFragment
   // For view sizes limit
   private static final int MAX_WIDTH = 512;
   private static final int MAX_HEIGHT = 1024;
-  // Wait time out
-  private static final int WAIT_TIMEOUT = 120000;
-  // Timeout to show cancel button while loading devices on sync chain creation
-  private static final int CANCEL_LOAD_BUTTON_TIMEOUT = 15*1000;
 
   private BraveSyncScreensObserver mSyncScreensObserver;
   private Switch mSyncSwitchBookmarks;
@@ -169,7 +166,6 @@ public class BraveSyncScreensPreference extends BravePreferenceFragment
   private ScrollView mScrollViewSyncDone;
   private LayoutInflater mInflater;
   private ImageView mQRCodeImage;
-  //private CountDownTimer mTimeoutTimer;
   private LinearLayout mLayoutSyncStartChain;
   private EditText mCodeWords;
   private FrameLayout mLayoutMobile;
@@ -177,12 +173,8 @@ public class BraveSyncScreensPreference extends BravePreferenceFragment
 
   @Override
   public void deviceInfoChanged() {
-      Log.e(TAG, "[BraveSync] BraveSyncScreensPreference.deviceInfoChanged 000");
       if (mSyncScreensObserver != null) {
-Log.e(TAG, "[BraveSync] BraveSyncScreensPreference.deviceInfoChanged will call mSyncScreensObserver.onDevicesAvailable()");
           mSyncScreensObserver.onDevicesAvailable();
-      } else {
-Log.e(TAG, "[BraveSync] BraveSyncScreensPreference.deviceInfoChanged mSyncScreensObserver is null");
       }
   }
   boolean deviceInfoObserverSet = false;
@@ -207,7 +199,6 @@ Log.e(TAG, "[BraveSync] BraveSyncScreensPreference.deviceInfoChanged mSyncScreen
   @Override
   public View onCreateView(
           LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-Log.e(TAG, "[BraveSync] BraveSyncScreensPreference.onCreateView");
 
       InvalidateCodephrase();
 
@@ -257,7 +248,6 @@ Log.e(TAG, "[BraveSync] BraveSyncScreensPreference.onCreateView");
 
   @Override
   public void onActivityCreated(Bundle savedInstanceState) {
-Log.e(TAG, "[BraveSync] BraveSyncScreensPreference.onActivityCreated savedInstanceState=" + savedInstanceState);
       getActivity().setTitle(R.string.sign_in_sync);
 
       BraveActivity mainActivity = BraveRewardsHelper.getBraveActivity();
@@ -271,16 +261,12 @@ Log.e(TAG, "[BraveSync] BraveSyncScreensPreference.onActivityCreated savedInstan
                               return;
                           }
                           if (null != message && !message.isEmpty()) {
-                              // if (message.equals("Credential server response 400. Signed request body of the client timestamp is required.")) {
-                              //     message = getResources().getString(R.string.sync_requires_correct_time);
-                              // }
                               message = " [" + message + "]";
                           }
                           final String messageFinal = (null == message) ? "" : message;
                           getActivity().runOnUiThread(new Runnable() {
                               @Override
                               public void run() {
-//                                  cancelTimeoutTimer();
                                   showEndDialog(getResources().getString(R.string.sync_device_failure) + messageFinal);
                               }
                           });
@@ -377,7 +363,6 @@ Log.e(TAG, "onSeedReceived 003 qrDataFinal="+qrDataFinal);
                                               getActivity().runOnUiThread(new Runnable() {
                                                   @Override
                                                   public void run() {
-//                                                      cancelTimeoutTimer();
                                                       mQRCodeImage.setImageBitmap(bitmap);
                                                       mQRCodeImage.invalidate();
                                                   }
@@ -470,7 +455,6 @@ Log.e(TAG, "[BraveSync] onDevicesAvailable device.mName="+device.mName);
                                               deleteButton.setVisibility(View.GONE);
                                           }
 
-                                          //if (currentDeviceId.equals(device.mDeviceId)) {
                                           if (device.mIsCurrentDevice) {
                                               mDeviceName = device.mName;
                                               // Current device is deleted by button on the bottom
@@ -591,7 +575,6 @@ Log.e(TAG, "[BraveSync] onDevicesAvailable device.mName="+device.mName);
                           getActivity().runOnUiThread(new Runnable() {
                               @Override
                               public void run() {
-//                                  cancelTimeoutTimer();
                                   setAppropriateView();
                               }
                           });
@@ -747,20 +730,6 @@ Log.e(TAG, "[BraveSync] onDevicesAvailable device.mName="+device.mName);
       mLayoutMobile = (FrameLayout) getView().findViewById(R.id.brave_sync_frame_mobile);
       mLayoutLaptop = (FrameLayout) getView().findViewById(R.id.brave_sync_frame_laptop);
 
-      // mTimeoutTimer = new CountDownTimer(WAIT_TIMEOUT, WAIT_TIMEOUT) {
-      //     @Override
-      //     public void onTick(long millisUntilFinished) {
-      //         // No action is required here
-      //     }
-      //     @Override
-      //     public void onFinish() {
-      //         if (null != mSyncScreensObserver) {
-      //             mSyncScreensObserver.onDevicesAvailable();
-      //         }
-      //         showEndDialog(getResources().getString(R.string.brave_sync_time_out_message));
-      //     }
-      // };
-
       setAppropriateView();
 
       super.onActivityCreated(savedInstanceState);
@@ -892,19 +861,18 @@ Log.e(TAG, "[BraveSync] mCodeWordsButton");
               Toast.makeText(getActivity().getApplicationContext(), getResources().getString(R.string.brave_sync_copied_text), Toast.LENGTH_LONG).show();
           }
       } else if (mConfirmCodeWordsButton == v) {
-;;;
 Log.e(TAG, "[BraveSync] mConfirmCodeWordsButton");
           BraveActivity mainActivity = BraveRewardsHelper.getBraveActivity();
           String[] words = mCodeWords.getText().toString().trim().replace("   ", " ").replace("\n", " ").split(" ");
-          if (/*BraveSyncWorker.NICEWARE_WORD_COUNT != words.length && */BraveSyncWorker.BIP39_WORD_COUNT != words.length) {
+          if (BIP39_WORD_COUNT != words.length) {
 Log.e(TAG, "[BraveSync] mConfirmCodeWordsButton - wrong words count");
               if (null != mSyncScreensObserver) {
-                  mSyncScreensObserver.onSyncError(getResources().getString(R.string.brave_sync_word_count_error));
+                  mSyncScreensObserver.onSyncError(
+                      getResources().getString(R.string.brave_sync_word_count_error));
               }
               return;
           }
-//24 words for now
-          //
+
           if (null != mainActivity && null != mainActivity.mBraveSyncWorker) {
               String hexString = mainActivity.mBraveSyncWorker.GetSeedHexFromWords(String.join(" ", words));
 Log.e(TAG, "[BraveSync] mConfirmCodeWordsButton - hexString="+hexString);
@@ -912,9 +880,7 @@ Log.e(TAG, "[BraveSync] mConfirmCodeWordsButton - hexString="+hexString);
 Log.e(TAG, "[BraveSync] mConfirmCodeWordsButton - wrong codephrase");
                   if (null != mSyncScreensObserver) {
                       mSyncScreensObserver.onSyncError(
-                          "The codeprase is wrong" // TODO(AB): pull into translated string
-                          //getResources().getString(R.string.brave_sync_word_count_error)
-                      );
+                          getResources().getString(R.string.brave_sync_wrong_code_error));
                   }
                   return;
               }
@@ -1007,9 +973,6 @@ Log.e(TAG, "[BraveSync] mConfirmCodeWordsButton - mCodephrase="+mCodephrase);
           }
       } else if (mRemoveDeviceButton == v) {
 Log.e(TAG, "[BraveSync] mRemoveDeviceButton");
-          //BraveActivity mainActivity = BraveRewardsHelper.getBraveActivity();
-          //mainActivity.mBraveSyncWorker.HandleReset();
-          //deleteDeviceDialog(deviceToDelete.mDeviceName, deviceToDelete.mDeviceId, deviceToDelete.mObjectId, mRemoveDeviceButton);
           deleteDeviceDialog(mDeviceName);
       } else if (mShowCategoriesButton == v) {
 Log.e(TAG, "[BraveSync] mShowCategoriesButton");
@@ -1294,15 +1257,6 @@ Log.e(TAG, "[BraveSync] BraveSyncScreensPreference.showEndDialog message="+messa
       alertDialog.show();
   }
 
-  // private void startTimeoutTimerWithPopup(String message) {
-  //     Toast.makeText(getActivity().getApplicationContext(), message, Toast.LENGTH_LONG).show();
-  //     mTimeoutTimer.start();
-  // }
-  //
-  // private void cancelTimeoutTimer() {
-  //     mTimeoutTimer.cancel();
-  // }
-
   private void deleteDeviceDialog(String deviceName) {
 Log.e(TAG, "[BraveSync] deleteDeviceDialog 000 deviceName=" + deviceName);
         assert deviceName != null && !deviceName.isEmpty();
@@ -1570,35 +1524,6 @@ Log.e(TAG, "[BraveSync] setAddLaptopLayout.runOnUiThread.run seedHex="+seedHex);
       });
   }
 
-  private void scheduleCancelButton() {
-      // String deviceId = BravePrefServiceBridge.getInstance().getSyncDeviceId();
-      // SharedPreferences sharedPref = getActivity().getApplicationContext().getSharedPreferences(BraveSyncWorker.PREF_NAME, 0);
-      // String deviceId = sharedPref.getString(BraveSyncWorker.PREF_DEVICE_ID, null);
-      String deviceId = null;
-      boolean syncChainExists = (deviceId != null && !deviceId.isEmpty());
-      if (!syncChainExists) {
-          mCancelLoadingButtonUpdater = new Timer();
-          mCancelLoadingButtonUpdater.schedule(new TimerTask() {
-              @Override
-              public void run() {
-                  ThreadUtils.runOnUiThread(new Runnable() {
-                      @Override
-                      public void run() {
-//                          mCancelLoadingButton.setVisibility(View.VISIBLE);
-                      }
-                  });
-              }
-          }, CANCEL_LOAD_BUTTON_TIMEOUT);
-      }
-  }
-
-  private void dismissCancelLoadingButton() {
-      mCancelLoadingButton.setVisibility(View.GONE);
-      if (mCancelLoadingButtonUpdater != null) {
-          mCancelLoadingButtonUpdater.cancel();
-      }
-  }
-
   private void setSyncDoneLayout() {
 Log.e(TAG, "[BraveSync] setSyncDoneLayout 000");
       BraveActivity mainActivity = BraveRewardsHelper.getBraveActivity();
@@ -1656,12 +1581,9 @@ Log.e(TAG, "[BraveSync] setSyncDoneLayout mRemoveDeviceButton.setVisibility(View
       // }
 
 
-      if (null != mainActivity/* && null != mainActivity.mBraveSyncWorker*/) {
+      if (null != mainActivity) {
           mBraveSyncTextDevicesTitle.setText(getResources().getString(R.string.brave_sync_loading_devices_title));
-//          mainActivity.mBraveSyncWorker.InterruptSyncSleep();
       }
-
-      scheduleCancelButton();
 
       if (null != mSyncScreensObserver) {
           mSyncScreensObserver.onDevicesAvailable();
@@ -1735,7 +1657,6 @@ Log.e(TAG, "[BraveSync] BraveSyncScreensPreference.onBackPressed");
           setJoinExistingChainLayout();
           return true;
       }
-      //cancelTimeoutTimer();
       return false;
   }
 

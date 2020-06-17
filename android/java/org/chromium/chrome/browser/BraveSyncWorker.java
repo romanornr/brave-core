@@ -61,7 +61,6 @@ import java.io.UnsupportedEncodingException;
 @JNINamespace("chrome::android")
 public class BraveSyncWorker {
     public static final String TAG = "SYNC";
-    public static final int BIP39_WORD_COUNT = 24;
 
     private Context mContext;
     private String mDebug = "true";
@@ -175,6 +174,7 @@ Log.e(TAG, "[BraveSync] GetCodephrase codephrase="+codephrase);
 Log.e(TAG, "[BraveSync] SaveCodephrase codephrase="+codephrase);
       nativeSaveCodeWords(mNativeBraveSyncWorker, codephrase);
     }
+
     public String GetSeedHexFromWords(String codephrase) {
 Log.e(TAG, "[BraveSync] GetSeedHexFromWords codephrase="+codephrase);
       String seedHex = nativeGetSeedHexFromWords(codephrase);
