@@ -84,7 +84,7 @@ import org.chromium.chrome.browser.qrreader.CameraSourcePreview;
 import org.chromium.chrome.browser.settings.BravePreferenceFragment;
 import org.chromium.chrome.browser.settings.SettingsActivity;
 import org.chromium.chrome.browser.settings.SettingsLauncher;
-import org.chromium.chrome.browser.sync.settings.ManageSyncSettings;
+import org.chromium.chrome.browser.sync.settings.BraveManageSyncSettings;
 import org.chromium.chrome.browser.sync.BraveSyncDevices;
 import org.chromium.ui.KeyboardVisibilityDelegate;
 import org.chromium.ui.base.DeviceFormFactor;
@@ -1014,7 +1014,7 @@ Log.e(TAG, "[BraveSync] mRemoveDeviceButton");
       } else if (mShowCategoriesButton == v) {
 Log.e(TAG, "[BraveSync] mShowCategoriesButton");
           SettingsLauncher.getInstance().launchSettingsPage(
-                  getContext(), ManageSyncSettings.class);
+                  getContext(), BraveManageSyncSettings.class);
       } else if (mAddDeviceButton == v) {
 Log.e(TAG, "[BraveSync] mAddDeviceButton");
           setNewChainLayout();
