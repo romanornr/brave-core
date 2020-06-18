@@ -16,6 +16,7 @@
 #include "brave/components/brave_shields/browser/brave_shields_web_contents_observer.h"
 #include "brave/components/brave_shields/browser/referrer_whitelist_service.h"
 #include "brave/components/brave_shields/common/brave_shield_constants.h"
+#include "brave/components/brave_shields/common/brave_shield_utils.h"
 #include "brave/components/brave_shields/common/features.h"
 #include "brave/components/content_settings/core/common/content_settings_util.h"
 #include "chrome/browser/content_settings/host_content_settings_map_factory.h"
@@ -332,33 +333,39 @@ void SetFingerprintingControlType(Profile* profile,
   if (!primary_pattern.IsValid())
     return;
 
-  ContentSetting content_setting = GetDefaultAllowFromControlType(type);
-  auto* map = HostContentSettingsMapFactory::GetForProfile(profile);
-  map->SetContentSettingCustomScope(
-      primary_pattern, ContentSettingsPattern::Wildcard(),
-      ContentSettingsType::PLUGINS, kFingerprintingV2,
-      // CONTENT_SETTING_DEFAULT means deleting the current content setting.
-      // With DEFAULT, it always use global FP setting.
-      // But we want DEFAULT as a standard FP blocking instead of fallback to
-      // global settings.
-      // As a workaround, picked CONTENT_SETTING_ASK to store it persistently.
-      content_setting == CONTENT_SETTING_DEFAULT ? CONTENT_SETTING_ASK
-                                                 : content_setting);
+  HostContentSettingsMapFactory::GetForProfile(profile)->
+      SetContentSettingCustomScope(
+          primary_pattern,
+          ContentSettingsPattern::FromString("https://balanced/*"),
+          ContentSettingsType::PLUGINS, kFingerprintingV2,
+          type == ControlType::DEFAULT ? CONTENT_SETTING_BLOCK
+                                       : CONTENT_SETTING_ALLOW);
+
+  HostContentSettingsMapFactory::GetForProfile(profile)->
+      SetContentSettingCustomScope(
+          primary_pattern,
+          ContentSettingsPattern::Wildcard(),
+          ContentSettingsType::PLUGINS,
+          kFingerprintingV2,
+          type == ControlType::ALLOW ? CONTENT_SETTING_ALLOW
+                                     : CONTENT_SETTING_BLOCK);
 
   RecordShieldsSettingChanged();
 }
 
 ControlType GetFingerprintingControlType(Profile* profile, const GURL& url) {
-  auto* map = HostContentSettingsMapFactory::GetForProfile(profile);
-  ContentSetting setting = map->GetContentSetting(
-        url, GURL(), ContentSettingsType::PLUGINS, kFingerprintingV2);
-  if (setting == CONTENT_SETTING_BLOCK) {
-    return ControlType::BLOCK;
-  } else if (setting == CONTENT_SETTING_ALLOW) {
-    return ControlType::ALLOW;
-  } else {
+  ContentSettingsForOneType fingerprinting_rules;
+  HostContentSettingsMapFactory::GetForProfile(profile)->
+      GetSettingsForOneType(ContentSettingsType::PLUGINS,
+                            brave_shields::kFingerprintingV2,
+                            &fingerprinting_rules);
+
+  ContentSetting fp_setting =
+      GetBraveFPContentSettingFromRules(fingerprinting_rules, url);
+  if (fp_setting == CONTENT_SETTING_DEFAULT)
     return ControlType::DEFAULT;
-  }
+  return fp_setting == CONTENT_SETTING_ALLOW ? ControlType::ALLOW
+                                             : ControlType::BLOCK;
 }
 
 void SetHTTPSEverywhereEnabled(Profile* profile,
