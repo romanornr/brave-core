@@ -438,32 +438,32 @@ Log.e(TAG, "[BraveSync] onDevicesAvailable deviceInfos.size()="+deviceInfos.size
 Log.e(TAG, "[BraveSync] onDevicesAvailable device.mName="+device.mName);
                                           }
                                           // TODO(alexey): remove R.id.brave_sync_remove_device from xml, because we cannot remove other devices with sync v2
+
+                                          // It will be possible with the PR https://github.com/brave/brave-core/pull/5871
+                                          // to remove other devices
                                           AppCompatImageView deleteButton = (AppCompatImageView) listItemView.findViewById(R.id.brave_sync_remove_device);
                                           if (null != deleteButton) {
-                                              deleteButton.setVisibility(View.GONE);
-                                          }
-
-                                          if (device.mIsCurrentDevice) {
-                                              mDeviceName = device.mName;
-                                              // Current device is deleted by button on the bottom
-                                              //deleteButton.setVisibility(View.GONE);
-                                              if (null != textView) {
-                                                   // Highlight curret device
-                                                   textView.setTextColor(ApiCompatibilityUtils.getColor(getActivity().getResources(), R.color.brave_theme_color));
-                                                   String currentDevice = device.mName + " " + getResources().getString(R.string.brave_sync_this_device_text);
-                                                   textView.setText(currentDevice);
+                                              if (device.mIsCurrentDevice) {
+                                                  mDeviceName = device.mName;
+                                                  // Current device is deleted by button on the bottom
+                                                  deleteButton.setVisibility(View.GONE);
+                                                  if (null != textView) {
+                                                       // Highlight curret device
+                                                       textView.setTextColor(ApiCompatibilityUtils.getColor(getActivity().getResources(), R.color.brave_theme_color));
+                                                       String currentDevice = device.mName + " " + getResources().getString(R.string.brave_sync_this_device_text);
+                                                       textView.setText(currentDevice);
+                                                  }
+                                                  // mRemoveDeviceButton is always visible, we can leave the chain in any time with sync v2
+                                                  if (null != mRemoveDeviceButton) {
+                                                       mRemoveDeviceButton.setTag(device);
+                                                  }
+                                              } else {
+                                                  deleteButton.setTag(device);
+                                                  deleteButton.setOnClickListener(v -> {
+                                                      BraveSyncDevices.SyncDeviceInfo deviceToDelete = (BraveSyncDevices.SyncDeviceInfo) v.getTag();
+                                                      deleteDeviceDialog(deviceToDelete, v);
+                                                  });
                                               }
-                                              // if (null != mRemoveDeviceButton) {
-                                              //     mRemoveDeviceButton.setTag(device);
-                                              //     mRemoveDeviceButton.setVisibility(View.VISIBLE);
-                                              //     mRemoveDeviceButton.setEnabled(true);
-                                              // }
-                                          } else {
-                                              // deleteButton.setTag(device);
-                                              // deleteButton.setOnClickListener(v -> {
-                                              //     BraveSyncWorker.ResolvedRecordToApply deviceToDelete = (BraveSyncWorker.ResolvedRecordToApply) v.getTag();
-                                              //     deleteDeviceDialog(deviceToDelete.mDeviceName, deviceToDelete.mDeviceId, deviceToDelete.mObjectId, v);
-                                              // });
                                           }
                                           insertPoint.addView(separator, index++);
                                           insertPoint.addView(listItemView, index++);
@@ -714,8 +714,8 @@ Log.e(TAG, "[BraveSync] onDevicesAvailable device.mName="+device.mName);
 Log.e(TAG, "[BraveSync] BraveSyncScreensPreference.setAppropriateView 000");
       getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
       getActivity().setTitle(R.string.sync_category_title);
-
       BraveActivity mainActivity = BraveActivity.getBraveActivity();
+      assert (mainActivity != null);
       boolean firstSetupComplete = mainActivity.mBraveSyncWorker.IsFirstSetupComplete();
 Log.e(TAG, "[BraveSync] setAppropriateView firstSetupComplete="+firstSetupComplete);
       if (!firstSetupComplete) {
@@ -939,7 +939,10 @@ Log.e(TAG, "[BraveSync] mConfirmCodeWordsButton - mCodephrase="+mCodephrase);
           }
       } else if (mRemoveDeviceButton == v) {
 Log.e(TAG, "[BraveSync] mRemoveDeviceButton");
-          deleteDeviceDialog(mDeviceName);
+          BraveSyncDevices.SyncDeviceInfo deviceToDelete = (BraveSyncDevices.SyncDeviceInfo) v.getTag();
+          assert deviceToDelete.mIsCurrentDevice;
+          assert mDeviceName.equals(deviceToDelete.mName);
+          deleteDeviceDialog(deviceToDelete, v);
       } else if (mShowCategoriesButton == v) {
 Log.e(TAG, "[BraveSync] mShowCategoriesButton");
           SettingsLauncher.getInstance().launchSettingsPage(
@@ -1183,9 +1186,10 @@ Log.e(TAG, "[BraveSync] BraveSyncScreensPreference.showEndDialog message="+messa
       alertDialog.show();
   }
 
-  private void deleteDeviceDialog(String deviceName) {
-Log.e(TAG, "[BraveSync] deleteDeviceDialog 000 deviceName=" + deviceName);
-        assert deviceName != null && !deviceName.isEmpty();
+  private void deleteDeviceDialog(BraveSyncDevices.SyncDeviceInfo deviceToDelete, View v) {
+Log.e(TAG, "[BraveSync] deleteDeviceDialog 000 deviceToDelete.mName=" + deviceToDelete.mName);
+        assert deviceToDelete != null;
+        assert !deviceToDelete.mName.isEmpty();
         AlertDialog.Builder alert = new AlertDialog.Builder(getActivity(), R.style.Theme_Chromium_AlertDialog);
         if (null == alert) {
             return;
@@ -1197,31 +1201,31 @@ Log.e(TAG, "[BraveSync] deleteDeviceDialog 000 deviceName=" + deviceName);
 Log.e(TAG, "[BraveSync] deleteDeviceDialog.onClick BUTTON_POSITIVE");
                     BraveActivity mainActivity = BraveActivity.getBraveActivity();
                     if (null != mainActivity && null != mainActivity.mBraveSyncWorker) {
-// Would go into DeviceResolver => ResetSync => mSyncScreensObserver.onResetSync();
-                        mainActivity.mBraveSyncWorker.HandleReset();
-                        // TODO(alexeybarabash): if we will have ability to remove other devices
-                        // from the chain, will have to disable pre-device remove button:
-                        // View v, v.setEnabled(false);
-                        mSyncScreensObserver.onResetSync();
-                        //     startTimeoutTimerWithPopup(getResources().getString(R.string.brave_sync_delete_sent));
+                        if (deviceToDelete.mIsCurrentDevice) {
+                            // Would go into DeviceResolver => ResetSync => mSyncScreensObserver.onResetSync();
+                            mainActivity.mBraveSyncWorker.HandleReset();
+                            mSyncScreensObserver.onResetSync();
+                            ViewGroup devicesUiGroup = (ViewGroup) getView().findViewById(R.id.brave_sync_devices);
+                            if (devicesUiGroup != null) {
+                                devicesUiGroup.removeAllViews();
+                            }
+                        } else {
+Toast.makeText(getActivity().getApplicationContext(), "Will be deleted " + deviceToDelete.mName, Toast.LENGTH_LONG).show();
+                            // TODO(alexeybarabash): actual actions to remove other dvice in chain
+                            // See https://github.com/brave/brave-core/pull/5871
+                            v.setEnabled(false);
+                        }
                     }
-                    // TODO(sergz): Uncomment sync service impl when we fully migrate on sync v2
-                    // if (null != mSyncService) {
-                    //     new Thread() {
-                    //         @Override
-                    //         public void run() {
-                    //             mSyncService.onDeleteDevice(deviceId);
-                    //         }
-                    //     }.start();
-                    //     v.setEnabled(false);
-                    //     startTimeoutTimerWithPopup(getResources().getString(R.string.brave_sync_delete_sent));
-                    // }
                 }
             }
         };
+        String deviceNameToDisplay = deviceToDelete.mName;
+        if (deviceToDelete.mIsCurrentDevice) {
+            deviceNameToDisplay += (" " + getResources().getString(R.string.brave_sync_this_device_text));
+        }
         AlertDialog alertDialog = alert
                 .setTitle(getResources().getString(R.string.brave_sync_remove_device_text))
-                .setMessage(getString(R.string.brave_sync_delete_device, deviceName))
+                .setMessage(getString(R.string.brave_sync_delete_device, deviceNameToDisplay))
                 .setPositiveButton(R.string.ok, onClickListener)
                 .setNegativeButton(R.string.cancel, onClickListener)
                 .create();
