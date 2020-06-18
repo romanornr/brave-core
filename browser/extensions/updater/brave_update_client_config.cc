@@ -97,14 +97,16 @@ void ExtensionActivityDataService::ClearActiveBit(const std::string& id) {
 // For privacy reasons, requires encryption of the component updater
 // communication with the update backend.
 BraveUpdateClientConfig::BraveUpdateClientConfig(
-    content::BrowserContext* context)
+    content::BrowserContext* context,
+    base::Optional<GURL> url_override)
     : context_(context),
       impl_(ExtensionUpdateClientCommandLineConfigPolicy(
                 base::CommandLine::ForCurrentProcess()),
             /*require_encryption=*/true),
       pref_service_(ExtensionPrefs::Get(context)->pref_service()),
       activity_data_service_(std::make_unique<ExtensionActivityDataService>(
-          ExtensionPrefs::Get(context))) {
+          ExtensionPrefs::Get(context))),
+      url_override_(url_override) {
   DCHECK(pref_service_);
 }
 
@@ -125,10 +127,14 @@ int BraveUpdateClientConfig::UpdateDelay() const {
 }
 
 std::vector<GURL> BraveUpdateClientConfig::UpdateUrl() const {
+  if (url_override_.has_value())
+    return {*url_override_};
   return impl_.UpdateUrl();
 }
 
 std::vector<GURL> BraveUpdateClientConfig::PingUrl() const {
+  if (url_override_.has_value())
+    return {*url_override_};
   return impl_.PingUrl();
 }
 
@@ -240,10 +246,11 @@ BraveUpdateClientConfig::~BraveUpdateClientConfig() {}
 
 // static
 scoped_refptr<BraveUpdateClientConfig> BraveUpdateClientConfig::Create(
-    content::BrowserContext* context) {
+    content::BrowserContext* context,
+    base::Optional<GURL> update_url_override) {
   FactoryCallback& factory = GetFactoryCallback();
-  return factory.is_null() ? scoped_refptr<BraveUpdateClientConfig>(
-                                 new BraveUpdateClientConfig(context))
+  return factory.is_null() ? base::MakeRefCounted<BraveUpdateClientConfig>(
+                                 context, update_url_override)
                            : factory.Run(context);
 }
 

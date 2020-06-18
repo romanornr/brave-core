@@ -12,8 +12,11 @@
 #include "base/containers/flat_map.h"
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
+#include "base/optional.h"
 #include "components/component_updater/configurator_impl.h"
 #include "components/update_client/configurator.h"
+
+class GURL;
 
 namespace content {
 class BrowserContext;
@@ -36,7 +39,11 @@ class BraveUpdateClientConfig : public update_client::Configurator {
           content::BrowserContext* context)>;
 
   static scoped_refptr<BraveUpdateClientConfig> Create(
-      content::BrowserContext* context);
+      content::BrowserContext* context,
+      base::Optional<GURL> url_override);
+
+  BraveUpdateClientConfig(content::BrowserContext* context,
+                          base::Optional<GURL> url_override);
 
   int InitialDelay() const override;
   int NextCheckDelay() const override;
@@ -70,7 +77,6 @@ class BraveUpdateClientConfig : public update_client::Configurator {
   friend class base::RefCountedThreadSafe<BraveUpdateClientConfig>;
   friend class ExtensionUpdateClientBaseTest;
 
-  explicit BraveUpdateClientConfig(content::BrowserContext* context);
   ~BraveUpdateClientConfig() override;
 
   // Injects a new client config by changing the creation factory.
@@ -86,6 +92,7 @@ class BraveUpdateClientConfig : public update_client::Configurator {
   scoped_refptr<update_client::NetworkFetcherFactory> network_fetcher_factory_;
   scoped_refptr<update_client::UnzipperFactory> unzip_factory_;
   scoped_refptr<update_client::PatcherFactory> patch_factory_;
+  base::Optional<GURL> url_override_;
 
   DISALLOW_COPY_AND_ASSIGN(BraveUpdateClientConfig);
 };
