@@ -4,21 +4,26 @@
 
 import { combineReducers } from 'redux'
 import * as storage from '../storage'
+import { setBadgeText } from '../browserAction'
 
 // Utils
 import { promotionPanelReducer } from './promotion_reducer'
 import { rewardsPanelReducer } from './rewards_panel_reducer'
 
 const mergeReducers = (state: RewardsExtension.State | undefined, action: any) => {
-  if (state === undefined) {
+  if (state == null) {
     state = storage.load()
+    setBadgeText(state)
   }
   const startingState = state
 
   state = rewardsPanelReducer(state, action)
   state = promotionPanelReducer(state, action)
 
-  if (state !== startingState) {
+  if (!state) {
+    state = storage.defaultState
+    storage.save(state)
+  } else if (state !== startingState) {
     storage.debouncedSave(state)
   }
 

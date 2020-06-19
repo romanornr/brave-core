@@ -15,7 +15,6 @@ import {
   StyledTitle,
   StyledTitleWrapper,
   StyledSafe,
-  StyledTabWrapper,
   StyledControlWrapper,
   StyledText,
   StyledTextWrapper
@@ -28,7 +27,7 @@ import ControlWrapper from 'brave-ui/components/formControls/controlWrapper'
 export interface Props {
   backupKey: string
   activeTabId: number
-  onTabChange: () => void
+  onTabChange: (newTabId: number) => void
   onClose: () => void
   onCopy?: (key: string) => void
   onPrint?: (key: string) => void
@@ -38,6 +37,7 @@ export interface Props {
   id?: string
   testId?: string
   funds?: string
+  onReset: () => void
 }
 
 interface State {
@@ -245,6 +245,44 @@ export default class ModalBackupRestore extends React.PureComponent<Props, State
     )
   }
 
+  getReset = () => {
+    return (
+      <>
+        <StyledTextWrapper>
+          <StyledText>
+            Some important text how you will lose all BAT and are you really really sure?!? <br/>
+            Also link to FAQ
+          </StyledText>
+        </StyledTextWrapper>
+        <StyledActionsWrapper>
+          <ActionButton
+            level={'primary'}
+            type={'accent'}
+            text={getLocale('reset')}
+            size={'medium'}
+            onClick={this.props.onReset}
+          />
+        </StyledActionsWrapper>
+      </>
+    )
+  }
+
+  getTabContent = (activeTabId: number) => {
+    switch (activeTabId) {
+      case 0: {
+        return this.getBackup()
+      }
+      case 1: {
+        return this.getRestore()
+      }
+      case 2: {
+        return this.getReset()
+      }
+    }
+
+    return null
+  }
+
   render () {
     const {
       id,
@@ -262,21 +300,18 @@ export default class ModalBackupRestore extends React.PureComponent<Props, State
           </StyledTitle>
         </StyledTitleWrapper>
         <StyledControlWrapper>
-          <StyledTabWrapper>
-            <Tab
-              onChange={onTabChange}
-              tabIndexSelected={activeTabId}
-              tabTitles={[
-                getLocale('backup'),
-                getLocale('restore')
-              ]}
-            />
-          </StyledTabWrapper>
+          <Tab
+            onChange={onTabChange}
+            tabIndexSelected={activeTabId}
+            tabTitles={[
+              getLocale('backup'),
+              getLocale('restore'),
+              getLocale('reset')
+            ]}
+          />
         </StyledControlWrapper>
         {
-          activeTabId === 0
-          ? this.getBackup()
-          : this.getRestore()
+          this.getTabContent(activeTabId)
         }
       </Modal>
     )

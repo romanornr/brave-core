@@ -273,8 +273,6 @@ class RewardsService : public KeyedService {
 
   virtual void RemovePendingContribution(const uint64_t id) = 0;
   virtual void RemoveAllPendingContributions() = 0;
-  virtual void ResetTheWholeState(
-      const base::Callback<void(bool)>& callback) = 0;
 
   void AddObserver(RewardsServiceObserver* observer);
   void RemoveObserver(RewardsServiceObserver* observer);
@@ -349,6 +347,8 @@ class RewardsService : public KeyedService {
 
   virtual void ClearDiagnosticLog(
       ClearDiagnosticLogCallback callback) = 0;
+
+  virtual void CompeteReset() = 0;
 
  protected:
   base::ObserverList<RewardsServiceObserver> observers_;

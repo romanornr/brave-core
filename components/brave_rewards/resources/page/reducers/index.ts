@@ -12,7 +12,7 @@ import publishersReducer from './publishers_reducer'
 import * as storage from '../storage'
 
 const mergeReducers = (state: Rewards.State | undefined, action: any) => {
-  if (state === undefined) {
+  if (state == null) {
     state = storage.load()
   }
   const startingState = state
@@ -22,7 +22,10 @@ const mergeReducers = (state: Rewards.State | undefined, action: any) => {
   state = promotionReducer(state, action)
   state = publishersReducer(state, action)
 
-  if (state !== startingState) {
+  if (!state) {
+    state = storage.defaultState
+    storage.save(state)
+  } else if (state !== startingState) {
     storage.debouncedSave(state)
   }
 

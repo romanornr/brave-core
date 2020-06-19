@@ -40,25 +40,19 @@ export class RewardsPanel extends React.Component<Props, State> {
   }
 
   componentDidMount () {
+    chrome.braveRewards.getRewardsMainEnabled(((enabled: boolean) => {
+      this.props.actions.onEnabledMain(enabled)
+    }))
+
     chrome.braveRewards.onlyAnonWallet((only: boolean) => {
       this.setState({
         onlyAnonWallet: !!only
       })
     })
 
-    chrome.windows.getCurrent({}, this.onWindowCallback)
-
-    chrome.braveRewards.getRewardsMainEnabled(((enabled: boolean) => {
-      this.props.actions.onEnabledMain(enabled)
-    }))
-
-    chrome.braveRewards.getAllNotifications((list: RewardsExtension.Notification[]) => {
-      this.props.actions.onAllNotifications(list)
-    })
-
-    this.handleGrantNotification()
-
     const { externalWallet, walletCreated } = this.props.rewardsPanelData
+
+    console.log("Mount", walletCreated)
 
     if (walletCreated) {
       utils.getExternalWallet(this.actions, externalWallet)
@@ -66,10 +60,24 @@ export class RewardsPanel extends React.Component<Props, State> {
       chrome.braveRewards.getRewardsParameters((parameters: RewardsExtension.RewardsParameters) => {
         rewardsPanelActions.onRewardsParameters(parameters)
       })
+
+      chrome.braveRewards.getAllNotifications((list: RewardsExtension.Notification[]) => {
+        this.props.actions.onAllNotifications(list)
+      })
+
+      chrome.windows.getCurrent({}, this.onWindowCallback)
+
+      this.handleGrantNotification()
     }
   }
 
   componentDidUpdate (prevProps: Props, prevState: State) {
+    console.log("Prev", prevProps.rewardsPanelData.walletCreated)
+    console.log("Now", this.props.rewardsPanelData.walletCreated)
+    if (!this.props.rewardsPanelData.walletCreated) {
+      return
+    }
+
     if (
       !prevProps.rewardsPanelData.walletCreated &&
       this.props.rewardsPanelData.walletCreated

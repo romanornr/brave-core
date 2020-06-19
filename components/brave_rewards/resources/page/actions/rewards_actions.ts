@@ -335,3 +335,9 @@ export const getCountryCode = () => action(types.GET_COUNTRY_CODE)
 export const onCountryCode = (countryCode: string) => action(types.ON_COUNTRY_CODE, {
   countryCode
 })
+
+export const completeReset = () => action(types.COMPLETE_RESET)
+
+export const onCompleteReset = (success: boolean) => action(types.ON_COMPLETE_RESET, {
+  success
+})

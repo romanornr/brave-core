@@ -370,8 +370,7 @@ RewardsServiceImpl::RewardsServiceImpl(Profile* profile)
       rewards_base_path_(profile_->GetPath().Append(kRewardsStatePath)),
       rewards_database_(new RewardsDatabase(publisher_info_db_path_)),
       notification_service_(new RewardsNotificationServiceImpl(profile)),
-      next_timer_id_(0),
-      reset_states_(false) {
+      next_timer_id_(0) {
   file_task_runner_->PostTask(
       FROM_HERE, base::BindOnce(&EnsureRewardsBaseDirectoryExists,
                                 rewards_base_path_));
@@ -1482,9 +1481,6 @@ void RewardsServiceImpl::OnGetTransactionHistory(
 void RewardsServiceImpl::SaveState(const std::string& name,
                                    const std::string& value,
                                    ledger::ResultCallback callback) {
-  if (reset_states_) {
-    return;
-  }
   base::ImportantFileWriter writer(
       rewards_base_path_.AppendASCII(name), file_task_runner_);
 
@@ -1519,31 +1515,6 @@ void RewardsServiceImpl::ResetState(
                      rewards_base_path_.AppendASCII(name)),
       base::BindOnce(&RewardsServiceImpl::OnResetState,
                      AsWeakPtr(), std::move(callback)));
-}
-
-void RewardsServiceImpl::ResetTheWholeState(
-    const base::Callback<void(bool)>& callback) {
-  reset_states_ = true;
-  notification_service_->DeleteAllNotifications();
-  std::vector<base::FilePath> paths;
-  paths.push_back(ledger_state_path_);
-  paths.push_back(publisher_state_path_);
-  paths.push_back(publisher_info_db_path_);
-  paths.push_back(publisher_list_path_);
-  paths.push_back(rewards_base_path_);
-
-  base::PostTaskAndReplyWithResult(
-      file_task_runner_.get(), FROM_HERE,
-      base::BindOnce(&ResetOnFilesTaskRunner,
-                     paths),
-      base::BindOnce(&RewardsServiceImpl::OnResetTheWholeState,
-                     AsWeakPtr(), std::move(callback)));
-}
-
-void RewardsServiceImpl::OnResetTheWholeState(
-    base::Callback<void(bool)> callback,
-    bool success) {
-  callback.Run(success);
 }
 
 void RewardsServiceImpl::OnSavedState(
@@ -3632,6 +3603,73 @@ void RewardsServiceImpl::OnGetAllPromotions(
     converted_rewards.push_back(properties);
   }
   std::move(callback).Run(std::move(converted_rewards));
+}
+
+void RewardsServiceImpl::CompeteReset() {
+  notification_service_->DeleteAllNotifications();
+  std::vector<base::FilePath> paths;
+  paths.push_back(ledger_state_path_);
+  paths.push_back(publisher_state_path_);
+  paths.push_back(publisher_info_db_path_);
+
+  base::PostTaskAndReplyWithResult(
+      file_task_runner_.get(),
+      FROM_HERE,
+      base::BindOnce(&ResetOnFilesTaskRunner, paths),
+      base::BindOnce(
+          &RewardsServiceImpl::OnCompeteReset,
+          AsWeakPtr()));
+}
+
+void RewardsServiceImpl::OnCompeteReset(
+    const bool success) {
+  // TODO(issue): we can do this easily with ClearPrefsWithPrefixSilently
+  // that is introduced in C84, for now we need to do the whole list
+  profile_->GetPrefs()->ClearPref(prefs::kRewardsNotificationStartupDelay);
+  profile_->GetPrefs()->ClearPref(prefs::kHideBraveRewardsButton);
+  profile_->GetPrefs()->ClearPref(prefs::kBraveRewardsEnabled);
+  profile_->GetPrefs()->ClearPref(prefs::kRewardsNotifications);
+  profile_->GetPrefs()->ClearPref(prefs::kRewardsNotificationTimerInterval);
+  profile_->GetPrefs()->ClearPref(prefs::kRewardsBackupNotificationFrequency);
+  profile_->GetPrefs()->ClearPref(prefs::kRewardsBackupNotificationInterval);
+  profile_->GetPrefs()->ClearPref(prefs::kRewardsBackupSucceeded);
+  profile_->GetPrefs()->ClearPref(prefs::kRewardsUserHasFunded);
+  profile_->GetPrefs()->ClearPref(prefs::kRewardsAddFundsNotification);
+  profile_->GetPrefs()->ClearPref(prefs::kRewardsNotificationStartupDelay);
+  profile_->GetPrefs()->ClearPref(prefs::kRewardsExternalWallets);
+  profile_->GetPrefs()->ClearPref(prefs::kRewardsBadgeText);
+  profile_->GetPrefs()->ClearPref(prefs::kStateServerPublisherListStamp);
+  profile_->GetPrefs()->ClearPref(prefs::kStateUpholdAnonAddress);
+  profile_->GetPrefs()->ClearPref(prefs::kStatePromotionLastFetchStamp);
+  profile_->GetPrefs()->ClearPref(prefs::kStatePromotionCorruptedMigrated);
+  profile_->GetPrefs()->ClearPref(prefs::kStateAnonTransferChecked);
+  profile_->GetPrefs()->ClearPref(prefs::kStateVersion);
+  profile_->GetPrefs()->ClearPref(prefs::kStateMinVisitTime);
+  profile_->GetPrefs()->ClearPref(prefs::kStateMinVisits);
+  profile_->GetPrefs()->ClearPref(prefs::kStateAllowNonVerified);
+  profile_->GetPrefs()->ClearPref(prefs::kStateAllowVideoContribution);
+  profile_->GetPrefs()->ClearPref(prefs::kStateScoreA);
+  profile_->GetPrefs()->ClearPref(prefs::kStateScoreB);
+  profile_->GetPrefs()->ClearPref(prefs::kStateAutoContributeEnabled);
+  profile_->GetPrefs()->ClearPref(prefs::kStateAutoContributeAmount);
+  profile_->GetPrefs()->ClearPref(prefs::kStateNextReconcileStamp);
+  profile_->GetPrefs()->ClearPref(prefs::kStateCreationStamp);
+  profile_->GetPrefs()->ClearPref(prefs::kStateAnonymousCardId);
+  profile_->GetPrefs()->ClearPref(prefs::kStateRecoverySeed);
+  profile_->GetPrefs()->ClearPref(prefs::kStatePaymentId);
+  profile_->GetPrefs()->ClearPref(prefs::kStateInlineTipRedditEnabled);
+  profile_->GetPrefs()->ClearPref(prefs::kStateInlineTipTwitterEnabled);
+  profile_->GetPrefs()->ClearPref(prefs::kStateInlineTipGithubEnabled);
+  profile_->GetPrefs()->ClearPref(prefs::kStateParametersRate);
+  profile_->GetPrefs()->ClearPref(prefs::kStateParametersAutoContributeChoice);
+  profile_->GetPrefs()->ClearPref(prefs::kStateParametersAutoContributeChoices);
+  profile_->GetPrefs()->ClearPref(prefs::kStateParametersTipChoices);
+  profile_->GetPrefs()->ClearPref(prefs::kStateParametersMonthlyTipChoices);
+  profile_->GetPrefs()->ClearPref(prefs::kStateFetchOldBalance);
+
+  for (auto& observer : observers_) {
+    observer.OnCompeteReset(success);
+  }
 }
 
 }  // namespace brave_rewards

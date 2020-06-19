@@ -110,10 +110,15 @@ chrome.braveRewards.onPromotionFinish.addListener((result: RewardsExtension.Resu
   })
 })
 
+chrome.braveRewards.onCompeteReset.addListener((properties: { success: boolean }) => {
+  rewardsPanelActions.onCompeteReset(properties.success)
+})
+
 // Fetch initial data required to refresh state, keeping in mind
 // that the extension process be restarted at any time.
 // TODO(petemill): Move to initializer function or single 'init' action.
 chrome.braveRewards.getRewardsMainEnabled((enabledMain: boolean) => {
+  console.log("NEJC getRewardsMainEnabled", enabledMain)
   rewardsPanelActions.onEnabledMain(enabledMain)
   if (enabledMain) {
     chrome.braveRewards.getAnonWalletStatus((result: RewardsExtension.Result) => {
@@ -127,6 +132,7 @@ chrome.braveRewards.getRewardsMainEnabled((enabledMain: boolean) => {
       rewardsPanelActions.onAllNotifications(list)
     })
     chrome.braveRewards.getRewardsParameters((parameters: RewardsExtension.RewardsParameters) => {
+      console.log("NEJC getRewardsParameters", parameters)
       rewardsPanelActions.onRewardsParameters(parameters)
     })
   }

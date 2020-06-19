@@ -3,7 +3,7 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 import { types } from '../../constants/rewards_panel_types'
-import * as storage from '../storage'
+import { Reducer } from 'redux'
 import { setBadgeText } from '../browserAction'
 import { isPublisherConnectedOrVerified } from '../../utils'
 
@@ -36,11 +36,7 @@ const updateBadgeTextAllWindows = (windows: chrome.windows.Window[], state?: Rew
 
 }
 
-export const rewardsPanelReducer = (state: RewardsExtension.State | undefined, action: any) => {
-  if (state === undefined) {
-    state = storage.load()
-    setBadgeText(state)
-  }
+export const rewardsPanelReducer: Reducer<RewardsExtension.State | undefined> = (state: RewardsExtension.State, action: any) => {
   const payload = action.payload
   switch (action.type) {
     case types.CREATE_WALLET:
@@ -264,7 +260,7 @@ export const rewardsPanelReducer = (state: RewardsExtension.State | undefined, a
       if (payload.enabled == null) {
         break
       }
-      state.enabledAC = payload.enabled
+      // state.enabledAC = payload.enabled
       break
     }
     case types.ON_PUBLISHER_LIST_NORMALIZED: {
@@ -482,6 +478,12 @@ export const rewardsPanelReducer = (state: RewardsExtension.State | undefined, a
       state = {
         ...state,
         parameters: payload.parameters
+      }
+      break
+    }
+    case types.ON_COMPLETE_RESET: {
+      if (payload.success) {
+        return undefined
       }
       break
     }

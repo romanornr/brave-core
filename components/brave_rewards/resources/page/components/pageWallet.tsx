@@ -77,8 +77,7 @@ class PageWallet extends React.Component<Props, State> {
     this.actions.onModalBackupOpen()
   }
 
-  onModalBackupTabChange = () => {
-    const newTabId = this.state.activeTabId === 0 ? 1 : 0
+  onModalBackupTabChange = (newTabId: number) => {
     this.setState({
       activeTabId: newTabId
     })
@@ -127,6 +126,10 @@ class PageWallet extends React.Component<Props, State> {
       key = this.pullRecoveryKeyFromFile(key)
       this.actions.recoverWallet(key)
     }
+  }
+
+  onModalBackupOnReset = () => {
+    this.actions.completeReset()
   }
 
   pullRecoveryKeyFromFile = (key: string) => {
@@ -799,6 +802,7 @@ class PageWallet extends React.Component<Props, State> {
               onPrint={this.onModalBackupOnPrint}
               onSaveFile={this.onModalBackupOnSaveFile}
               onRestore={this.onModalBackupOnRestore}
+              onReset={this.onModalBackupOnReset}
               error={walletRecoverySuccess === false ? getLocale('walletRecoveryFail') : ''}
             />
             : null

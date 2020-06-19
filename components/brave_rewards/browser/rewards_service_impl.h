@@ -232,7 +232,6 @@ class RewardsServiceImpl : public RewardsService,
 
   const RewardsNotificationService::RewardsNotificationsMap&
     GetAllNotifications() override;
-  void ResetTheWholeState(const base::Callback<void(bool)>& callback) override;
 
   void SetAutoContributionAmount(const double amount) const override;
 
@@ -556,6 +555,8 @@ class RewardsServiceImpl : public RewardsService,
 
   void ClearDiagnosticLog(ClearDiagnosticLogCallback callback) override;
 
+  void CompeteReset() override;
+
   bool ClearDiagnosticLogOnFileTaskRunner(
       const base::FilePath& path);
 
@@ -708,6 +709,8 @@ class RewardsServiceImpl : public RewardsService,
   void OnGetAllPromotions(
       GetAllPromotionsCallback callback,
       base::flat_map<std::string, ledger::PromotionPtr> promotions);
+
+  void OnCompeteReset(const bool success);
 
 #if defined(OS_ANDROID)
   ledger::Environment GetServerEnvironmentForAndroid();

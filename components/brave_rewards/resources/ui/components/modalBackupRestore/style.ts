@@ -85,11 +85,6 @@ export const StyledSafe = styled<{}, 'span'>('span')`
   color: ${p => p.theme.color.brandBatInteracting};
 `
 
-export const StyledTabWrapper = styled<{}, 'div'>('div')`
-  margin: 0 auto;
-  max-width: 400px;
-`
-
 export const StyledControlWrapper = styled<{}, 'div'>('div')`
   width: 100%;
   margin-bottom: 30px;

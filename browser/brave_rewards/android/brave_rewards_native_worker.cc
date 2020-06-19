@@ -499,7 +499,7 @@ void BraveRewardsNativeWorker::ResetTheWholeState(JNIEnv* env,
 
 void BraveRewardsNativeWorker::OnAdsResetTheWholeState(bool sucess) {
   if (sucess && brave_rewards_service_) {
-    brave_rewards_service_->ResetTheWholeState(base::Bind(
+    brave_rewards_service_->CompleteReset(base::Bind(
            &BraveRewardsNativeWorker::OnResetTheWholeState,
            weak_factory_.GetWeakPtr()));
   } else {

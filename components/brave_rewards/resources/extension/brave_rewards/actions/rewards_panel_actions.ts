@@ -147,3 +147,7 @@ export const onExternalWallet = (wallet: RewardsExtension.ExternalWallet) => act
 export const onAnonWalletStatus = (result: RewardsExtension.Result) => action(types.ON_ANON_WALLET_STATUS, {
   result
 })
+
+export const onCompeteReset = (success: boolean) => action(types.ON_COMPLETE_RESET, {
+  success
+})

@@ -55,8 +55,11 @@ const cleanData = (state: RewardsExtension.State) => {
 }
 
 export const load = (): RewardsExtension.State => {
+  console.log("load")
   const data = window.localStorage.getItem(keyName)
+  console.log("data", data)
   let state: RewardsExtension.State = defaultState
+  console.log("state", state)
   if (data) {
     try {
       state = JSON.parse(data)
@@ -64,6 +67,7 @@ export const load = (): RewardsExtension.State => {
       console.error('Could not parse local storage data: ', e)
     }
   }
+  console.log("state2", state)
   return cleanData(state)
 }
 
@@ -72,3 +76,7 @@ export const debouncedSave = debounce((data: RewardsExtension.State) => {
     window.localStorage.setItem(keyName, JSON.stringify(cleanData(data)))
   }
 }, 50)
+
+export const save = (data: RewardsExtension.State) => {
+  window.localStorage.setItem(keyName, JSON.stringify(cleanData(data)))
+}
