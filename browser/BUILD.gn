@@ -247,6 +247,9 @@ source_set("browser_process") {
         "sync/brave_sync_devices_android.cc",
         "sync/brave_sync_devices_android.h",
       ]
+      deps += [
+        "//components/sync_device_info",
+      ]
     }
 
     deps += [
