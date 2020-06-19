@@ -8,6 +8,7 @@
 #include "base/strings/string_util.h"
 #include "brave/common/brave_features.h"
 #include "brave/common/pref_names.h"
+#include "brave/components/brave_component_updater/browser/brave_component_features.h"
 #include "brave/components/brave_shields/common/features.h"
 #include "brave/components/brave_sync/buildflags/buildflags.h"
 #include "brave/components/ntp_background_images/browser/features.h"
