@@ -12,6 +12,7 @@
 #include "base/json/json_writer.h"
 #include "base/path_service.h"
 #include "base/strings/string_number_conversions.h"
+#include "base/strings/string_split.h"
 
 #include "brave/build/android/jni_headers/BraveSyncWorker_jni.h"
 #include "brave/components/brave_sync/brave_sync_prefs.h"
@@ -27,6 +28,10 @@
 
 #include "third_party/leveldatabase/src/include/leveldb/db.h"
 
+namespace {
+  static const size_t SEED_BIP39_WORD_COUNT = 24u;
+  static const size_t SEED_BYTES_COUNT = 32u;
+}
 
 namespace chrome {
 namespace android {
@@ -260,6 +265,10 @@ DLOG(ERROR) << "[BraveSync] " << __func__ << " 000";
   syncer::SyncService* sync_service = GetSyncService();
 DLOG(ERROR) << "[BraveSync] " << __func__ << " sync_service=" << sync_service;
   if (sync_service) {
+    if (sync_service_observer_.IsObserving(sync_service)) {
+      sync_service_observer_.Remove(sync_service);
+    }
+
 /* TODO: look on
 void ProfileSyncServiceAndroid::RequestStop(JNIEnv* env,
                                             const JavaParamRef<jobject>&) {
@@ -431,7 +440,7 @@ DLOG(ERROR) << "[BraveSync] " << __func__ << " str_seed_words="<<str_seed_words;
   std::string sync_code_hex;
   std::vector<uint8_t> bytes;
   if (brave_sync::crypto::PassphraseToBytes32(str_seed_words, &bytes)) {
-    DCHECK_EQ(bytes.size(), 32u);
+    DCHECK_EQ(bytes.size(), SEED_BYTES_COUNT);
     sync_code_hex = base::HexEncode(&bytes.at(0), bytes.size());
   } else {
     DLOG(WARNING) << "[BraveSync] " << __func__ <<
@@ -453,8 +462,20 @@ DLOG(ERROR) << "[BraveSync] " << __func__ << " str_seed_hex="<<str_seed_hex;
   std::vector<uint8_t> bytes;
   std::string sync_code_words;
   if (base::HexStringToBytes(str_seed_hex, &bytes)) {
-    DCHECK_EQ(bytes.size(), 32u);
-    sync_code_words = brave_sync::crypto::PassphraseFromBytes32(bytes);
+    DCHECK_EQ(bytes.size(), SEED_BYTES_COUNT);
+    if (bytes.size(), SEED_BYTES_COUNT) {
+        sync_code_words = brave_sync::crypto::PassphraseFromBytes32(bytes);
+        std::vector<std::string> splitted_code_words =
+            base::SplitString(sync_code_words, " ",
+                base::WhitespaceHandling::TRIM_WHITESPACE,
+                base::SplitResult::SPLIT_WANT_NONEMPTY);
+        if (splitted_code_words.size() != SEED_BIP39_WORD_COUNT) {
+          LOG(ERROR) << "wrong codewords count " << splitted_code_words.size();
+          sync_code_words = "";
+        }
+    } else {
+      LOG(ERROR) << "wrong seed bytes " << bytes.size();
+    }
     DCHECK_NE(sync_code_words, "");
   } else {
     DLOG(WARNING) << "[BraveSync] " << __func__ <<

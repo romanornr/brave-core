@@ -678,6 +678,9 @@ until they verify, or until 90 days have passed.
       <message name="IDS_BRAVE_SYNC_WRONG_CODE_ERROR" desc="Text for wrong Brave Sync code error.">
 	Wrong sync code
       </message>
+      <message name="IDS_BRAVE_SYNC_WRONG_QRCODE_ERROR" desc="Text for wrong Brave Sync QR code error.">
+	Wrong sync QR code
+      </message>
 <!--      <message name="IDS_BRAVE_SYNC_TIME_OUT_MESSAGE" desc="Text for Brave Sync time out message.">
 	Something went wrong, looks like your request timed out.
       </message>
@@ -908,7 +911,7 @@ until they verify, or until 90 days have passed.
         Turn on Brave Ads
       </message>
       <message name="IDS_NTP_TOS_TEXT" desc="Text for term of service on NTP">
-        By tapping Earn &amp; Give, you agree to the <ph name="TERMS_OF_SERVICE">%1$s</ph>. 
+        By tapping Earn &amp; Give, you agree to the <ph name="TERMS_OF_SERVICE">%1$s</ph>.
       </message>
       <message name="IDS_GET_PAID_TO_SEE_IMAGE" desc="Text description for NTP banner.">
         Get paid to see this background image.
